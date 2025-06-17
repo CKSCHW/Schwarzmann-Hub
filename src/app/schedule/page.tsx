@@ -3,31 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Download, FileText, UploadCloud } from "lucide-react";
-import type { ScheduleFile } from "@/types";
-
-const mockSchedules: ScheduleFile[] = [
-  {
-    id: "sched1",
-    name: "Wocheneinteilung KW 30.pdf",
-    dateAdded: "2024-07-22",
-    size: "1.2 MB",
-    url: "/api/mock-pdf-download/kw30.pdf", // Placeholder URL
-  },
-  {
-    id: "sched2",
-    name: "Wocheneinteilung KW 29.pdf",
-    dateAdded: "2024-07-15",
-    size: "1.1 MB",
-    url: "/api/mock-pdf-download/kw29.pdf",
-  },
-  {
-    id: "sched3",
-    name: "Wocheneinteilung KW 28.pdf",
-    dateAdded: "2024-07-08",
-    size: "1.3 MB",
-    url: "/api/mock-pdf-download/kw28.pdf",
-  },
-];
+import { mockSchedules } from "@/lib/mockData";
 
 export default function SchedulePage() {
   return (
