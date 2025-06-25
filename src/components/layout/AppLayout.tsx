@@ -18,7 +18,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarDays, LayoutDashboard, Zap, Bell, LogOut, ShieldCheck, Newspaper } from "lucide-react";
+import { Home, CalendarDays, LayoutDashboard, Bell, LogOut, ShieldCheck, Newspaper } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
@@ -158,7 +158,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <Zap className="h-12 w-12 animate-pulse text-primary" />
+        <Image
+            src="https://www.elektro-schwarzmann.at/wp-content/uploads/2022/05/Elektro_Schwarzmann_Logo.svg"
+            alt="Elektro Schwarzmann Logo"
+            width={240}
+            height={55}
+            unoptimized
+            className="animate-pulse"
+        />
       </div>
     );
   }
@@ -166,7 +173,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!user && pathname !== '/login') {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <Zap className="h-12 w-12 animate-pulse text-primary" />
+        <Image
+            src="https://www.elektro-schwarzmann.at/wp-content/uploads/2022/05/Elektro_Schwarzmann_Logo.svg"
+            alt="Elektro Schwarzmann Logo"
+            width={240}
+            height={55}
+            unoptimized
+            className="animate-pulse"
+        />
       </div>
     );
   }
@@ -182,8 +196,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar side="left" variant="sidebar" collapsible="icon">
           <SidebarHeader className="p-4">
             <Link href="/" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-              <Zap className="h-7 w-7 text-primary transition-all group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8" />
-              <span className="font-headline text-2xl font-semibold group-data-[collapsible=icon]:hidden">Schwarzmann</span>
+              {/* Full logo, hidden when collapsed */}
+              <Image 
+                  src="https://www.elektro-schwarzmann.at/wp-content/uploads/2022/05/Elektro_Schwarzmann_Logo.svg" 
+                  alt="Elektro Schwarzmann Logo" 
+                  width={160}
+                  height={36} 
+                  unoptimized 
+                  className="group-data-[collapsible=icon]:hidden"
+              />
+              {/* Square icon, only shown when collapsed */}
+              <Image 
+                  src="https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-180x180.png" 
+                  alt="ES Logo" 
+                  width={32}
+                  height={32}
+                  className="hidden group-data-[collapsible=icon]:block"
+              />
             </Link>
           </SidebarHeader>
           <SidebarContent>

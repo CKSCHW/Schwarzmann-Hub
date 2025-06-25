@@ -15,8 +15,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Zap, KeyRound } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from 'next/image';
 
 async function setSessionCookie(idToken: string) {
   await fetch('/api/auth/session', {
@@ -155,10 +156,7 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <div className="mx-auto flex w-full max-w-sm flex-col items-center justify-center space-y-6">
-          <div className="flex items-center gap-2">
-              <Zap className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-headline font-semibold">Schwarzmann App</span>
-          </div>
+          <Image src="https://www.elektro-schwarzmann.at/wp-content/uploads/2022/05/Elektro_Schwarzmann_Logo.svg" alt="Elektro Schwarzmann Logo" width={240} height={55} unoptimized />
 
         <Card className="w-full">
           <Tabs defaultValue="email" className="w-full">
