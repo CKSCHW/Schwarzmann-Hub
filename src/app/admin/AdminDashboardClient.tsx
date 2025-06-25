@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from 'react';
@@ -12,9 +13,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { BellRing, CheckCircle2, Eye, Loader2, Newspaper, UploadCloud } from 'lucide-react';
-import { seedInitialData, createArticle } from '@/actions/adminActions';
-import type { NewsArticle, ReadReceiptWithUser, ScheduleFile } from '@/types';
+import { BellRing, Eye, Loader2, Newspaper, UploadCloud, Globe } from 'lucide-react';
+import { seedInitialData, createArticle, importWordPressArticles } from '@/actions/adminActions';
+import type { NewsArticle, ReadReceiptWithUser } from '@/types';
 import { allNewsArticles } from '@/lib/mockData';
 
 const articleSchema = z.object({
@@ -44,6 +45,7 @@ export default function AdminDashboardClient({
   const [receipts, setReceipts] = useState<ReadReceiptWithUser[]>(initialReceipts);
   const [isSeeding, setIsSeeding] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<ArticleFormValues>({
@@ -76,6 +78,34 @@ export default function AdminDashboardClient({
       });
     } finally {
       setIsSeeding(false);
+    }
+  };
+
+  const handleImportWordPress = async () => {
+    setIsImporting(true);
+    try {
+      const result = await importWordPressArticles();
+      window.location.reload(); // Reload to show new articles
+      toast({
+        title: 'WordPress Import erfolgreich',
+        description: `${result.count} neue Artikel wurden importiert.`,
+      });
+      if (result.count > 0) {
+          toast({
+            title: 'Push-Benachrichtigung (Simuliert)',
+            description: 'Eine Benachrichtigung über die neuen Artikel würde jetzt an alle Benutzer gesendet.',
+            variant: 'default',
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Fehler beim Import',
+        description: 'Die Artikel von der Webseite konnten nicht importiert werden.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -219,6 +249,30 @@ export default function AdminDashboardClient({
               </Button>
                {articles.length > 0 && <p className="text-xs text-muted-foreground mt-2">Daten bereits vorhanden.</p>}
                <p className="text-xs text-muted-foreground mt-4">Dies schreibt die Artikel aus den ursprünglichen Mock-Daten in Ihre Firestore-Datenbank.</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    WordPress Import
+                </CardTitle>
+                <CardDescription>
+                    Importieren Sie die neuesten Beiträge vom öffentlichen Unternehmensblog.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Button onClick={handleImportWordPress} disabled={isImporting}>
+                    {isImporting ? (
+                        <Loader2 className="animate-spin mr-2" />
+                    ) : (
+                        <UploadCloud className="mr-2" />
+                    )}
+                    Blog-Artikel importieren
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                    Sucht nach neuen Artikeln auf elektro-schwarzmann.at und fügt sie hier hinzu.
+                </p>
             </CardContent>
           </Card>
            <Card>

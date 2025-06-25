@@ -10,6 +10,8 @@ export interface NewsArticle {
   date: string; // Stored as ISO string
   author?: string;
   category?: string;
+  source?: string; // e.g., 'wordpress' or 'internal'
+  sourceId?: string; // original post ID from source
 }
 
 export interface ScheduleFile {
