@@ -14,6 +14,10 @@ export const metadata: Metadata = {
     title: "Schwarzmann App",
     statusBarStyle: "default",
   },
+  icons: {
+    icon: 'https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-180x180.png',
+    apple: 'https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-180x180.png',
+  }
 };
 
 export const viewport: Viewport = {
