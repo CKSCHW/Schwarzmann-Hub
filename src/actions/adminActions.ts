@@ -4,6 +4,15 @@
 import { revalidatePath } from 'next/cache';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser } from '@/types';
+import https from 'https';
+
+// WARNING: This is a workaround for local development environments with SSL certificate issues.
+// Do NOT use this in a production environment as it bypasses SSL certificate validation,
+// which is a security risk.
+const insecureAgent = new https.Agent({
+  rejectUnauthorized: false,
+});
+
 
 // Helper function to strip HTML tags
 function stripHtml(html: string): string {
@@ -34,7 +43,7 @@ async function fetchWpImageUrlById(id: string): Promise<string | null> {
 
     for (const url of urls) {
         try {
-            const response = await fetch(url, { next: { revalidate: 0 } });
+            const response = await fetch(url, { next: { revalidate: 0 }, agent: insecureAgent });
             if (response.ok) {
                 const media = await response.json();
                 if (media.source_url) {
@@ -111,7 +120,7 @@ export async function importWordPressArticles() {
   for (const source of wpSources) {
       let wpArticles;
       try {
-        const response = await fetch(source.url, { next: { revalidate: 0 } }); // No caching for imports
+        const response = await fetch(source.url, { next: { revalidate: 0 }, agent: insecureAgent }); // No caching for imports
         if (!response.ok) {
             console.error(`Failed to fetch WordPress articles from ${source.name}. Status: ${response.status}`);
             continue; // Skip to the next source
