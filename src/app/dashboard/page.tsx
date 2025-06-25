@@ -6,8 +6,6 @@ import { ArrowRight, Newspaper, CalendarCheck2, Users, Settings } from "lucide-r
 import Image from "next/image";
 import { getAppointmentsForUser } from "@/actions/dashboardActions";
 
-export const dynamic = 'force-dynamic';
-
 const quickAccessItems = [
   {
     title: "Aktuelle News",
