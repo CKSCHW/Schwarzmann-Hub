@@ -1,11 +1,13 @@
+
 'use server';
 
 import { adminDb } from '@/lib/firebase-admin';
 import type { NewsArticle } from '@/types';
 
-// Action to get all articles
-export async function getArticles(): Promise<NewsArticle[]> {
-    const articlesSnapshot = await adminDb.collection('articles').orderBy('date', 'desc').limit(10).get();
+// Action to get articles, sorted by date
+export async function getArticles(options?: { limit?: number }): Promise<NewsArticle[]> {
+    const limit = options?.limit ?? 10;
+    const articlesSnapshot = await adminDb.collection('articles').orderBy('date', 'desc').limit(limit).get();
     const articles = articlesSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()

@@ -87,7 +87,7 @@ export default function AdminDashboardClient({
       const result = await importWordPressArticles();
       window.location.reload(); // Reload to show new articles
       toast({
-        title: 'WordPress Import erfolgreich',
+        title: 'Webseiten-Import erfolgreich',
         description: `${result.count} neue Artikel wurden importiert.`,
       });
       if (result.count > 0) {
@@ -101,7 +101,7 @@ export default function AdminDashboardClient({
       console.error(error);
       toast({
         title: 'Fehler beim Import',
-        description: 'Die Artikel von der Webseite konnten nicht importiert werden.',
+        description: 'Die Artikel von den Webseiten konnten nicht importiert werden.',
         variant: 'destructive',
       });
     } finally {
@@ -117,6 +117,7 @@ export default function AdminDashboardClient({
         imageUrl: data.imageUrl || `https://placehold.co/1200x600.png`,
         author: data.author || 'Geschäftsführung',
         category: 'Unternehmen',
+        source: 'internal', // Explicitly set source for internal articles
       };
       const newArticle = await createArticle(newArticleData);
       setArticles([newArticle, ...articles]);
@@ -154,10 +155,10 @@ export default function AdminDashboardClient({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Newspaper className="h-5 w-5" />
-                Neuen Artikel erstellen
+                Neuen internen Artikel erstellen
               </CardTitle>
               <CardDescription>
-                Veröffentlichen Sie hier neue Unternehmens-News.
+                Veröffentlichen Sie hier neue unternehmensinterne News.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -255,10 +256,10 @@ export default function AdminDashboardClient({
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Globe className="h-5 w-5" />
-                    WordPress Import
+                    Webseiten-Import
                 </CardTitle>
                 <CardDescription>
-                    Importieren Sie die neuesten Beiträge vom öffentlichen Unternehmensblog.
+                    Importieren Sie die neuesten Beiträge von den öffentlichen Unternehmenswebseiten.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -268,10 +269,10 @@ export default function AdminDashboardClient({
                     ) : (
                         <UploadCloud className="mr-2" />
                     )}
-                    Blog-Artikel importieren
+                    Webseiten-Artikel importieren
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">
-                    Sucht nach neuen Artikeln auf elektro-schwarzmann.at und fügt sie hier hinzu.
+                    Sucht nach neuen Artikeln und fügt sie hier hinzu.
                 </p>
             </CardContent>
           </Card>

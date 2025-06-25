@@ -11,56 +11,124 @@ function stripHtml(html: string): string {
   return html.replace(/<[^>]*>?/gm, '');
 }
 
+// Helper to extract the first image ID from vc_single_image shortcode
+function extractFirstVcImageId(content: string): string | null {
+    if (!content) return null;
+    // Normalize various quote types to standard double quotes
+    const normalized = content
+        .replace(/“|”|„|″/g, '"') // Smart quotes to double
+        .replace(/‘|’/g, "'");    // Smart single quotes to single
+
+    // Regex to find image="123" in a vc_single_image shortcode. Handles single or double quotes.
+    const regex = /vc_single_image[^\]]+?image\s*=\s*["'](\d+)["']/;
+    const match = normalized.match(regex);
+    return match ? match[1] : null;
+}
+
+// Helper to fetch an image URL by its media ID from WordPress APIs
+async function fetchWpImageUrlById(id: string): Promise<string | null> {
+    const urls = [
+        `https://www.elektro-schwarzmann.at/wp-json/wp/v2/media/${id}`,
+        `https://news.elektro-schwarzmann.at/wp-json/wp/v2/media/${id}`
+    ];
+
+    for (const url of urls) {
+        try {
+            const response = await fetch(url, { next: { revalidate: 0 } });
+            if (response.ok) {
+                const media = await response.json();
+                if (media.source_url) {
+                    return media.source_url;
+                }
+            }
+        } catch (error) {
+            console.warn(`Failed to fetch media from ${url}, trying next fallback.`);
+        }
+    }
+    return null;
+}
+
+
 // Action to import articles from WordPress
 export async function importWordPressArticles() {
-  const response = await fetch('https://www.elektro-schwarzmann.at/wp-json/wp/v2/posts?_embed=true&per_page=20');
-  if (!response.ok) {
-    throw new Error('Failed to fetch WordPress articles.');
-  }
-  const wpArticles = await response.json();
+  const wpSources = [
+      { name: 'Elektro Schwarzmann', url: 'https://www.elektro-schwarzmann.at/wp-json/wp/v2/posts?_embed=true&per_page=20', author: 'Elektro Schwarzmann' },
+      { name: 'News', url: 'https://news.elektro-schwarzmann.at/wp-json/wp/v2/posts?_embed=true&per_page=20', author: 'ES News' },
+  ];
 
   const articlesCollection = adminDb.collection('articles');
   
-  // Get existing WordPress articles from Firestore to prevent duplicates
-  const existingWpArticlesSnapshot = await articlesCollection.where('source', '==', 'wordpress').get();
-  const existingSourceIds = new Set(existingWpArticlesSnapshot.docs.map(doc => doc.data().sourceId));
+  // Get all existing articles from Firestore to prevent duplicates
+  const existingArticlesSnapshot = await articlesCollection.get();
+  const existingSourceIds = new Set(existingArticlesSnapshot.docs.map(doc => doc.data().sourceId).filter(id => id));
 
   const batch = adminDb.batch();
-  let newArticlesCount = 0;
+  let totalNewArticles = 0;
 
-  for (const article of wpArticles) {
-    const sourceId = article.id.toString();
-    if (!existingSourceIds.has(sourceId)) {
-      
-      const featuredMedia = article._embedded?.['wp:featuredmedia']?.[0];
-      const imageUrl = featuredMedia?.source_url || `https://placehold.co/1200x600.png`;
+  for (const source of wpSources) {
+      let wpArticles;
+      try {
+        const response = await fetch(source.url, { next: { revalidate: 0 } }); // No caching for imports
+        if (!response.ok) {
+            console.error(`Failed to fetch WordPress articles from ${source.name}. Status: ${response.status}`);
+            continue; // Skip to the next source
+        }
+        wpArticles = await response.json();
+      } catch (error) {
+        console.error(`Error fetching from ${source.name}:`, error);
+        continue;
+      }
 
-      const newArticle: Omit<NewsArticle, 'id'> = {
-        title: stripHtml(article.title.rendered),
-        snippet: stripHtml(article.excerpt.rendered),
-        content: article.content.rendered,
-        imageUrl: imageUrl,
-        date: new Date(article.date).toISOString(),
-        author: 'Elektro Schwarzmann',
-        category: 'Unternehmens-News',
-        source: 'wordpress',
-        sourceId: sourceId,
-      };
+      for (const article of wpArticles) {
+          const sourceId = `${source.name}-${article.id}`;
+          if (!existingSourceIds.has(sourceId)) {
+            
+              let imageUrl = `https://placehold.co/1200x600.png`;
+              
+              // 1. Try to get featured media
+              const featuredMedia = article._embedded?.['wp:featuredmedia']?.[0];
+              if (featuredMedia?.source_url) {
+                  imageUrl = featuredMedia.source_url;
+              } else {
+                  // 2. If no featured media, try to extract from content
+                  const imageId = extractFirstVcImageId(article.content.rendered);
+                  if (imageId) {
+                      const foundUrl = await fetchWpImageUrlById(imageId);
+                      if (foundUrl) {
+                          imageUrl = foundUrl;
+                      }
+                  }
+              }
 
-      const docRef = articlesCollection.doc(); // new doc with auto-generated ID
-      batch.set(docRef, newArticle);
-      newArticlesCount++;
-    }
+              const authorName = article._embedded?.author?.[0]?.name;
+
+              const newArticle: Omit<NewsArticle, 'id'> = {
+                  title: stripHtml(article.title.rendered),
+                  snippet: stripHtml(article.excerpt.rendered),
+                  content: article.content.rendered,
+                  imageUrl: imageUrl,
+                  date: new Date(article.date).toISOString(),
+                  author: authorName || source.author,
+                  category: 'Unternehmens-News',
+                  source: source.name,
+                  sourceId: sourceId,
+              };
+
+              const docRef = articlesCollection.doc(); // new doc with auto-generated ID
+              batch.set(docRef, newArticle);
+              totalNewArticles++;
+          }
+      }
   }
 
-  if (newArticlesCount > 0) {
-    await batch.commit();
+  if (totalNewArticles > 0) {
+      await batch.commit();
   }
   
   revalidatePath('/');
   revalidatePath('/admin');
   
-  return { count: newArticlesCount };
+  return { count: totalNewArticles };
 }
 
 // Action to seed initial data from mockData into Firestore
