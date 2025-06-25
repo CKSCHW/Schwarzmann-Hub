@@ -70,7 +70,7 @@ This will download all your project files into a new folder named `my-app` insid
 
 ### 3. Install Dependencies and Build
 
-Inside your project directory (`/var/w ww/my-app`), install the required packages and build the app for production.
+Inside your project directory (`/var/www/my-app`), install the required packages and build the app for production.
 
 ```bash
 # Install project dependencies
@@ -169,16 +169,9 @@ sudo nano /etc/nginx/sites-available/my-app
 ```nginx
 server {
     listen 80;
-
-    # Replace this with your actual domain name or server's public IP address.
-    # Do NOT include "http://" here. For example: app.yourcompany.com
-    server_name your_domain.com;
+    server_name your_domain.com; # Or your server's IP
 
     location / {
-        # This line tells Nginx to forward requests to your Next.js app,
-        # which is running locally on port 3000.
-        # The "http://" here is correct and required because Nginx is talking 
-        # to your app internally over an unsecured HTTP connection.
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -273,3 +266,44 @@ sudo certbot renew --dry-run
 ```
 
 If it completes without errors, you're all set. You now have a secure, deployed Next.js application.
+
+---
+
+### 🚨 Deployment Troubleshooting 🚨
+
+#### Problem: Network Timeout when accessing `https://<YOUR_IP_ADDRESS>`
+
+If you see a "Network Timeout Error" when you try to access your app via `https://192.168.20.78` or a similar IP address, this is expected behavior. Here's why and how to fix it.
+
+*   **The Cause:** Standard SSL certificates (for `https://`) are issued for **domain names** (like `app.your-company.com`), not for IP addresses. Your browser cannot establish a secure HTTPS connection to an IP address, which results in a timeout. Nginx is configured for HTTPS but the browser can't complete the handshake.
+
+*   **The Solution:**
+
+    1.  **For local network testing (using an IP address):** Always use **HTTP**.
+        *   Correct: `http://192.168.20.78`
+        *   Incorrect: `https://192.168.20.78`
+
+    2.  **For public access (using a domain name):** Always use **HTTPS** after you have set up a domain and run Certbot.
+        *   Correct: `https://app.your-company.com`
+        *   Incorrect: `http://app.your-company.com` (Certbot should automatically redirect this)
+
+#### Problem: Connection Refused or Still Can't Access the App
+
+This usually means a firewall is blocking the connection. You need to allow traffic for Nginx.
+
+1.  **Check Firewall Status (UFW - Uncomplicated Firewall):**
+    ```bash
+    sudo ufw status
+    ```
+    If it says `Status: active`, you need to add rules. If it's `inactive`, the firewall is not the problem.
+
+2.  **Allow Nginx Traffic:** Nginx registers a few profiles with `ufw`. 'Nginx Full' allows both HTTP (port 80) and HTTPS (port 443) traffic.
+    ```bash
+    sudo ufw allow 'Nginx Full'
+    ```
+
+3.  **Verify the Rule:**
+    ```bash
+    sudo ufw status
+    ```
+    You should now see `Nginx Full` in the list of allowed applications. Your site should now be accessible.
