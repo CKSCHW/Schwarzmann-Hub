@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/',
     display: 'standalone',
     background_color: '#ffffff',
-    theme_color: '#003366',
+    theme_color: '#eb680d',
     icons: [
       {
         src: 'https://www.elektro-schwarzmann.at/images/favicon.ico',

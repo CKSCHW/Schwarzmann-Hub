@@ -46,7 +46,7 @@ const AppHeader = () => {
         <div className="flex items-center gap-2">
             <SidebarTrigger className="md:hidden" />
             <Link href="/" className="flex items-center gap-2 font-semibold">
-                <Image src="https://www.elektro-schwarzmann.at/images/logo_ci.png" alt="Elektro Schwarzmann Logo" width={180} height={41} unoptimized />
+                <Image src="https://www.elektro-schwarzmann.at/wp-content/uploads/2022/05/Elektro_Schwarzmann_Logo.svg" alt="Elektro Schwarzmann Logo" width={180} height={41} unoptimized />
             </Link>
         </div>
         <div className="flex items-center gap-4">
