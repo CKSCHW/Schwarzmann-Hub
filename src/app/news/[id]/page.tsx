@@ -52,7 +52,7 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
         )}
 
         <div className="prose prose-lg dark:prose-invert max-w-none">
-          <p className="lead text-xl text-muted-foreground">{article.snippet}</p>
+          <div dangerouslySetInnerHTML={{ __html: article.snippet }} />
           {article.content && <div dangerouslySetInnerHTML={{ __html: article.content }} />}
         </div>
       </article>

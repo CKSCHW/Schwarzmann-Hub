@@ -4,6 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import type { NewsArticle } from "@/types";
 import { ArrowRight, CalendarDays } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NewsCardProps {
   article: NewsArticle;
@@ -35,7 +36,15 @@ export default function NewsCard({ article, isFeatured = false }: NewsCardProps)
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
-        <p className={`text-muted-foreground ${isFeatured ? 'text-base' : 'text-sm'}`}>{article.snippet}</p>
+        <div
+          className={cn(
+            "prose prose-sm dark:prose-invert max-w-none",
+            "text-muted-foreground",
+            "[&_p]:my-2 first:[&_p]:mt-0 last:[&_p]:mb-0",
+            isFeatured ? "sm:prose-base" : "prose-sm"
+          )}
+          dangerouslySetInnerHTML={{ __html: article.snippet }}
+        />
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-auto">
         <div className="flex items-center text-xs text-muted-foreground">

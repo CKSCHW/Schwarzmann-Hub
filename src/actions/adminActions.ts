@@ -143,7 +143,7 @@ export async function importWordPressArticles() {
 
               const newArticle: Omit<NewsArticle, 'id'> = {
                   title: stripHtml(article.title.rendered),
-                  snippet: stripHtml(article.excerpt.rendered),
+                  snippet: article.excerpt.rendered,
                   content: processedContent, // Save the processed content
                   imageUrl: imageUrl,
                   date: new Date(article.date).toISOString(),
