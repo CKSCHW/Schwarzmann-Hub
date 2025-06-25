@@ -32,17 +32,20 @@ export const adminStorage = getStorage(adminApp);
 
 // Helper function to get the current user on the server side
 export async function getCurrentUser() {
-  const cookieStore = cookies();
-  const sessionCookie = cookieStore.get('__session')?.value;
-  if (!sessionCookie) {
-    return null;
-  }
   try {
-    const decodedIdToken = await adminAuth.verifySessionCookie(sessionCookie, true);
+    const cookieStore = cookies();
+    const sessionCookie = cookieStore.get('__session');
+
+    if (!sessionCookie?.value) {
+      return null;
+    }
+  
+    const decodedIdToken = await adminAuth.verifySessionCookie(sessionCookie.value, true);
     const user = await adminAuth.getUser(decodedIdToken.uid);
     return { ...user, customClaims: decodedIdToken };
   } catch (error) {
-    // This is not a critical server error, just a failed auth attempt (e.g. expired cookie).
+    // Catches verification errors, cookie parsing errors, etc.
+    // This is not a critical server error, just a failed auth attempt.
     return null;
   }
 }
