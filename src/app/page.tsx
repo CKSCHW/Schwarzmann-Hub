@@ -4,10 +4,27 @@ import { getArticles } from "@/actions/newsActions";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import type { NewsArticle } from "@/types";
+
+/**
+ * Deduplicates articles based on their sourceId or, as a fallback, their unique id.
+ * Since articles are fetched sorted by date descending, this will always keep the newest version.
+ */
+function deduplicateArticles(articles: NewsArticle[]): NewsArticle[] {
+  const uniqueArticlesMap = new Map<string, NewsArticle>();
+  for (const article of articles) {
+    const key = article.sourceId || article.id;
+    if (!uniqueArticlesMap.has(key)) {
+      uniqueArticlesMap.set(key, article);
+    }
+  }
+  return Array.from(uniqueArticlesMap.values());
+}
 
 export default async function HomePage() {
-  // Fetch latest 20 articles to have a good pool for all categories
-  const allArticles = await getArticles({ limit: 20 });
+  // Fetch more articles to have a good pool for all categories after deduplication
+  const allArticlesFromDb = await getArticles({ limit: 40 });
+  const allArticles = deduplicateArticles(allArticlesFromDb);
 
   const featuredNews = allArticles[0]; // The absolute latest article is featured
 

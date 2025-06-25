@@ -1,9 +1,29 @@
 
 import { getArticles } from '@/actions/newsActions';
 import NewsCard from '@/components/NewsCard';
+import type { NewsArticle } from '@/types';
+
+/**
+ * Deduplicates articles based on their sourceId or, as a fallback, their unique id.
+ * Since articles are fetched sorted by date descending, this will always keep the newest version.
+ */
+function deduplicateArticles(articles: NewsArticle[]): NewsArticle[] {
+  const uniqueArticlesMap = new Map<string, NewsArticle>();
+  for (const article of articles) {
+    // Use sourceId as the primary key for deduplication, as it's consistent for WordPress posts.
+    // Fallback to the Firestore document ID for internal posts.
+    const key = article.sourceId || article.id;
+    if (!uniqueArticlesMap.has(key)) {
+      uniqueArticlesMap.set(key, article);
+    }
+  }
+  return Array.from(uniqueArticlesMap.values());
+}
+
 
 export default async function AllNewsPage() {
-  const articles = await getArticles();
+  const articlesFromDb = await getArticles();
+  const articles = deduplicateArticles(articlesFromDb);
 
   return (
     <div className="space-y-8">
