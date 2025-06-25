@@ -32,9 +32,7 @@ const appointmentSchema = z.object({
     required_error: 'Ein Datum ist erforderlich.',
   }),
   description: z.string().optional(),
-  groups: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: 'Sie müssen mindestens eine Gruppe auswählen.',
-  }),
+  groups: z.array(z.string()),
 });
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
@@ -191,7 +189,7 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
                        <div className="mb-4">
                         <FormLabel className="text-base">Gruppen zuweisen</FormLabel>
                         <p className="text-sm text-muted-foreground">
-                            Wählen Sie aus, wer diesen Termin sehen soll.
+                            Wählen Sie aus, wer diesen Termin sehen soll. Wenn Sie keine Gruppe auswählen, ist der Termin für alle sichtbar.
                         </p>
                        </div>
                       <div className="grid grid-cols-2 gap-2">
@@ -211,7 +209,7 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
                                       checked={field.value?.includes(group)}
                                       onCheckedChange={(checked) => {
                                         return checked
-                                          ? field.onChange([...field.value, group])
+                                          ? field.onChange([...(field.value || []), group])
                                           : field.onChange(field.value?.filter((value) => value !== group));
                                       }}
                                     />
@@ -257,7 +255,7 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
                     <TableRow key={appointment.id}>
                       <TableCell className="font-medium">{appointment.title}</TableCell>
                       <TableCell>{new Date(appointment.date).toLocaleDateString('de-DE')}</TableCell>
-                      <TableCell className="text-xs">{appointment.groups.join(', ')}</TableCell>
+                      <TableCell className="text-xs">{appointment.groups.length > 0 ? appointment.groups.join(', ') : 'Alle'}</TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"

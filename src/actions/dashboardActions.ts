@@ -15,16 +15,6 @@ export async function getAppointmentsForUser(): Promise<Appointment[]> {
   const claims = user.customClaims || {};
   const userGroups = (claims.groups as UserGroup[] | undefined) || [];
   
-  // If user has no groups, they should not see any group-restricted appointments.
-  // We can add logic for public appointments (e.g., where groups array is empty) if needed later.
-  if (userGroups.length === 0) {
-    return [];
-  }
-
-  // Firestore doesn't support 'array-contains-any-of-these-values' directly in a single query.
-  // The most scalable way for many appointments would be to query for each group, but for a moderate amount,
-  // fetching all and filtering in memory is simpler and often sufficient.
-  // For this app, let's assume the number of appointments is manageable.
   const appointmentsSnapshot = await adminDb.collection('appointments').orderBy('date', 'asc').get();
   
   const allAppointments = appointmentsSnapshot.docs.map(doc => ({
@@ -32,10 +22,17 @@ export async function getAppointmentsForUser(): Promise<Appointment[]> {
     ...doc.data(),
   } as Appointment));
 
-  // Filter appointments where there's an intersection between appointment.groups and user.groups
-  const userAppointments = allAppointments.filter(appointment => 
-    appointment.groups.some(group => userGroups.includes(group))
-  );
+  // A user sees an appointment if:
+  // 1. The appointment has no groups assigned (it's public for everyone).
+  // 2. The user's list of groups has at least one group in common with the appointment's groups.
+  const userAppointments = allAppointments.filter(appointment => {
+    // Condition 1: Public appointment (visible to everyone)
+    if (!appointment.groups || appointment.groups.length === 0) {
+      return true;
+    }
+    // Condition 2: User must have at least one of the required groups
+    return appointment.groups.some(group => userGroups.includes(group));
+  });
 
   return userAppointments;
 }
