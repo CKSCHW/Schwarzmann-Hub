@@ -1,20 +1,22 @@
 
 'use server';
 
-import { adminDb } from '@/lib/firebase-admin';
+import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/firebase-admin';
 import type { Appointment, UserGroup } from '@/types';
 
 export async function getAppointmentsForUser(): Promise<Appointment[]> {
-  const user = await getCurrentUser();
-  if (!user) {
+  const sessionUser = await getCurrentUser(); // Get user from session cookie to confirm they are logged in
+  if (!sessionUser) {
     return [];
   }
 
-  // Ensure claims and groups are correctly typed
-  const claims = user.customClaims || {};
+  // To ensure we have the latest group assignments, we fetch the user record directly from Firebase Auth.
+  // This avoids issues with stale data in the session cookie after a user's groups are changed by an admin.
+  const userRecord = await adminAuth.getUser(sessionUser.uid);
+  const claims = userRecord.customClaims || {};
   const userGroups = (claims.groups as UserGroup[] | undefined) || [];
-  
+
   const appointmentsSnapshot = await adminDb.collection('appointments').orderBy('date', 'asc').get();
   
   const allAppointments = appointmentsSnapshot.docs.map(doc => ({
