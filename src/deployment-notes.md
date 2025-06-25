@@ -70,7 +70,7 @@ This will download all your project files into a new folder named `my-app` insid
 
 ### 3. Install Dependencies and Build
 
-Inside your project directory (`/var/w_ww/my-app`), install the required packages and build the app for production.
+Inside your project directory (`/var/www/my-app`), install the required packages and build the app for production.
 
 ```bash
 # Install project dependencies
@@ -107,16 +107,16 @@ nano .env.local
 
 #### C. Paste the Key
 
-Now, you must paste your **entire** Firebase Service Account Key into this file.
+Now, you must paste your **entire** Firebase Service Account Key into this file. **This step must be done perfectly.**
 
 1.  On your **local computer**, open the `.json` key file you just downloaded from Firebase in a simple text editor (like Notepad, VS Code, or TextEdit).
 2.  Select **ALL** the text in that file (`Ctrl+A` or `Cmd+A`). Make sure your selection starts with `{` and ends with `}`.
 3.  Copy the selected text (`Ctrl+C` or `Cmd+C`).
 4.  Go back to your **server's terminal** where `nano` is open.
 5.  Type `FIREBASE_SERVICE_ACCOUNT_KEY=`
-6.  Type a single quote `'`.
-7.  Now, paste the key you copied. In most terminal programs, you can right-click to paste. **Do not use `Ctrl+V`**.
-8.  After the pasted content (which ends in `}`), type another single quote `'`.
+6.  Type a single quote: `'`
+7.  **Paste the key**. In most terminals (like PuTTY or Windows Terminal), you can simply **right-click** to paste the text. **Do NOT use `Ctrl+V`**, as that may not work or may add strange characters.
+8.  After the pasted content (which must end with `}`), type another single quote: `'`
 
 The final result must be **a single, unbroken line** that looks EXACTLY like this (but with your own project details):
 
@@ -132,14 +132,14 @@ FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "your-pr
 
 ---
 
-#### ❗ **TROUBLESHOOTING THIS STEP** ❗
+#### ❗ **CRITICAL STEP: TROUBLESHOOTING** ❗
 
-If you start the app and still see the `CRITICAL CONFIGURATION ERROR`, it is 100% certain that one of these things is wrong:
+If you start the app and still see the `CRITICAL CONFIGURATION ERROR`, it is **100% certain** that one of these things is wrong with the `.env.local` file you created. This is the most common point of failure in any web deployment.
 
-*   **Incomplete Copy:** You did not copy the *entire* JSON object. It must start with `{` and end with `}`.
-*   **Extra Characters:** You accidentally added extra characters or line breaks when pasting. The `FIREBASE_SERVICE_ACCOUNT_KEY=` part must be followed immediately by a single quote `'`, then the JSON, then another single quote `'`. There should be no characters or spaces before or after this single line.
-*   **Wrong Key:** You may have copied a different JSON file, not the service account key. The key **must** contain `"type": "service_account"` and a `"project_id"`.
-*   **File Not Saved Correctly:** The file was not saved as `.env.local` in the root of your project (`/var/www/my-app`).
+*   **❗ Incomplete Copy:** You did not copy the **entire** JSON object. It must start with `{` and end with `}`. Even one missing character will cause this error.
+*   **❗ Extra Characters:** You accidentally added extra characters or line breaks when pasting. The entire `FIREBASE_SERVICE_ACCOUNT_KEY='...'` must be on a **single line**. There can be no spaces before `FIREBASE_SERVICE_ACCOUNT_KEY=` or after the final single quote `'`.
+*   **❗ Wrong Key:** You may have copied a different JSON file, not the service account key. The key **must** contain `"type": "service_account"` and a `"project_id"`.
+*   **❗ File Not Saved Correctly:** The file was not saved as `.env.local` in the root of your project (`/var/www/my-app`). Use `ls -a` to check for hidden files.
 
 ---
 
