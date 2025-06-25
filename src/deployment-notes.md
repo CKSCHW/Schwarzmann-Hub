@@ -169,9 +169,16 @@ sudo nano /etc/nginx/sites-available/my-app
 ```nginx
 server {
     listen 80;
-    server_name your_domain.com; # Or your server's IP
+
+    # Replace this with your actual domain name or server's public IP address.
+    # Do NOT include "http://" here. For example: app.yourcompany.com
+    server_name your_domain.com;
 
     location / {
+        # This line tells Nginx to forward requests to your Next.js app,
+        # which is running locally on port 3000.
+        # The "http://" here is correct and required because Nginx is talking 
+        # to your app internally over an unsecured HTTP connection.
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -195,7 +202,8 @@ sudo nginx -t
 # If the test is successful, restart Nginx to apply the changes
 sudo systemctl restart nginx
 ```
-Your application should now be live on HTTP. The next section will guide you through adding HTTPS.
+
+Your application should now be live! You can manage it using commands like `pm2 list`, `pm2 stop my-app`, and `pm2 logs my-app`.
 
 ### 7. Creating Users and Admins
 
