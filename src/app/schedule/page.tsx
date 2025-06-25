@@ -9,7 +9,7 @@ export default async function SchedulePage() {
   const user = await getCurrentUser();
   const schedules = await getSchedules();
   
-  const isAdmin = user?.customClaims?.role === 'admin';
+  const isAdmin = user?.isAdmin ?? false;
 
   return (
     <div className="space-y-8">

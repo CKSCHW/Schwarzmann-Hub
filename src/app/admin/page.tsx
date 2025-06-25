@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
 export default async function AdminPage() {
   const user = await getCurrentUser();
 
-  if (!user || user.customClaims?.role !== 'admin') {
+  if (!user || !user.isAdmin) {
     redirect('/');
   }
 

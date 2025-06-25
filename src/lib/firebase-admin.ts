@@ -4,6 +4,8 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { cookies } from 'next/headers';
+import { noStore } from 'next/cache';
+import type { SimpleUser } from '@/types';
 
 const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
@@ -31,7 +33,8 @@ export const adminAuth = getAuth(adminApp);
 export const adminStorage = getStorage(adminApp);
 
 // Helper function to get the current user on the server side
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<SimpleUser | null> {
+  noStore();
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get('__session');
 
@@ -41,8 +44,19 @@ export async function getCurrentUser() {
   
   try {
     const decodedIdToken = await adminAuth.verifySessionCookie(sessionCookie.value, true);
-    const user = await adminAuth.getUser(decodedIdToken.uid);
-    return { ...user, customClaims: decodedIdToken };
+    
+    // Create a plain, serializable user object from the token claims.
+    // This avoids passing complex, server-only objects to components.
+    const user: SimpleUser = {
+      uid: decodedIdToken.uid,
+      email: decodedIdToken.email,
+      displayName: decodedIdToken.name,
+      photoURL: decodedIdToken.picture,
+      isAdmin: decodedIdToken.role === 'admin',
+      groups: decodedIdToken.groups || [],
+    };
+    return user;
+
   } catch (error) {
     // Catches verification errors, cookie parsing errors, etc.
     // This is not a critical server error, just a failed auth attempt.
