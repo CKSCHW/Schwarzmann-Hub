@@ -32,14 +32,14 @@ export const adminStorage = getStorage(adminApp);
 
 // Helper function to get the current user on the server side
 export async function getCurrentUser() {
-  try {
-    const { get } = cookies();
-    const sessionCookie = get('__session');
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('__session');
 
-    if (!sessionCookie?.value) {
-      return null;
-    }
+  if (!sessionCookie?.value) {
+    return null;
+  }
   
+  try {
     const decodedIdToken = await adminAuth.verifySessionCookie(sessionCookie.value, true);
     const user = await adminAuth.getUser(decodedIdToken.uid);
     return { ...user, customClaims: decodedIdToken };
