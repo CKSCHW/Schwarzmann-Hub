@@ -95,12 +95,18 @@ export async function importWordPressArticles() {
 
   const articlesCollection = adminDb.collection('articles');
   
-  // Get all existing articles from Firestore to prevent duplicates
+  // Get all existing articles from Firestore to create a map of sourceId -> docId
   const existingArticlesSnapshot = await articlesCollection.get();
-  const existingSourceIds = new Set(existingArticlesSnapshot.docs.map(doc => doc.data().sourceId).filter(id => id));
+  const existingArticlesMap = new Map<string, string>();
+  existingArticlesSnapshot.docs.forEach(doc => {
+      if (doc.data().sourceId) {
+          existingArticlesMap.set(doc.data().sourceId, doc.id);
+      }
+  });
 
   const batch = adminDb.batch();
   let totalNewArticles = 0;
+  let totalUpdatedArticles = 0;
 
   for (const source of wpSources) {
       let wpArticles;
@@ -118,58 +124,62 @@ export async function importWordPressArticles() {
 
       for (const article of wpArticles) {
           const sourceId = `${source.name}-${article.id}`;
-          if (!existingSourceIds.has(sourceId)) {
-            
-              let imageUrl = `https://placehold.co/1200x600.png`;
-              
-              // 1. Try to get featured media
-              const featuredMedia = article._embedded?.['wp:featuredmedia']?.[0];
-              if (featuredMedia?.source_url) {
-                  imageUrl = featuredMedia.source_url;
-              } else {
-                  // 2. If no featured media, try to extract from content
-                  const imageId = extractFirstVcImageId(article.content.rendered);
-                  if (imageId) {
-                      const foundUrl = await fetchWpImageUrlById(imageId);
-                      if (foundUrl) {
-                          imageUrl = foundUrl;
-                      }
+          
+          let imageUrl = `https://placehold.co/1200x600.png`;
+          
+          // 1. Try to get featured media
+          const featuredMedia = article._embedded?.['wp:featuredmedia']?.[0];
+          if (featuredMedia?.source_url) {
+              imageUrl = featuredMedia.source_url;
+          } else {
+              // 2. If no featured media, try to extract from content
+              const imageId = extractFirstVcImageId(article.content.rendered);
+              if (imageId) {
+                  const foundUrl = await fetchWpImageUrlById(imageId);
+                  if (foundUrl) {
+                      imageUrl = foundUrl;
                   }
               }
-              
-              // Process content to replace shortcodes with <img> tags
-              const processedContent = await processShortcodes(article.content.rendered);
-              // Also process the snippet to remove any remaining shortcodes
-              const processedSnippet = await processShortcodes(article.excerpt.rendered);
-              const authorName = article._embedded?.author?.[0]?.name;
+          }
+          
+          const processedContent = await processShortcodes(article.content.rendered);
+          const processedSnippet = await processShortcodes(article.excerpt.rendered);
+          const authorName = article._embedded?.author?.[0]?.name;
 
-              const newArticle: Omit<NewsArticle, 'id'> = {
-                  title: stripHtml(article.title.rendered),
-                  snippet: processedSnippet,
-                  content: processedContent,
-                  imageUrl: imageUrl,
-                  date: new Date(article.date).toISOString(),
-                  author: authorName || source.author,
-                  category: 'Unternehmens-News',
-                  source: source.name,
-                  sourceId: sourceId,
-              };
-
-              const docRef = articlesCollection.doc(); // new doc with auto-generated ID
-              batch.set(docRef, newArticle);
+          const articlePayload: Omit<NewsArticle, 'id'> = {
+              title: stripHtml(article.title.rendered),
+              snippet: processedSnippet,
+              content: processedContent,
+              imageUrl: imageUrl,
+              date: new Date(article.date).toISOString(),
+              author: authorName || source.author,
+              category: 'Unternehmens-News',
+              source: source.name,
+              sourceId: sourceId,
+          };
+          
+          const existingDocId = existingArticlesMap.get(sourceId);
+          if (existingDocId) {
+              const docRef = articlesCollection.doc(existingDocId);
+              batch.update(docRef, articlePayload);
+              totalUpdatedArticles++;
+          } else {
+              const docRef = articlesCollection.doc();
+              batch.set(docRef, articlePayload);
               totalNewArticles++;
           }
       }
   }
 
-  if (totalNewArticles > 0) {
+  if (totalNewArticles > 0 || totalUpdatedArticles > 0) {
       await batch.commit();
   }
   
   revalidatePath('/');
   revalidatePath('/admin');
+  revalidatePath('/news');
   
-  return { count: totalNewArticles };
+  return { newCount: totalNewArticles, updatedCount: totalUpdatedArticles };
 }
 
 // Action to seed initial data from mockData into Firestore

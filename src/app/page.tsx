@@ -1,6 +1,9 @@
 
 import NewsCard from "@/components/NewsCard";
 import { getArticles } from "@/actions/newsActions";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
 export default async function HomePage() {
   // Fetch latest 20 articles to have a good pool for all categories
@@ -32,6 +35,11 @@ export default async function HomePage() {
             <h2 id="internal-news-title" className="text-2xl font-headline font-semibold">
               Weitere interne Meldungen
             </h2>
+            <Button asChild variant="ghost">
+              <Link href="/news">
+                Alle anzeigen <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {internalNews.map((article) => (
@@ -47,6 +55,11 @@ export default async function HomePage() {
             <h2 id="wordpress-news-title" className="text-2xl font-headline font-semibold">
               Aktuelles von unseren Webseiten
             </h2>
+             <Button asChild variant="ghost">
+              <Link href="/news">
+                Alle anzeigen <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {wordpressNews.map((article) => (

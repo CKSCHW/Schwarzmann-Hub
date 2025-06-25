@@ -17,7 +17,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarDays, LayoutDashboard, Zap, Bell, LogOut, ShieldCheck } from "lucide-react";
+import { Home, CalendarDays, LayoutDashboard, Zap, Bell, LogOut, ShieldCheck, Newspaper } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
@@ -32,6 +32,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { href: "/", label: "Startseite", icon: Home, match: (pathname) => pathname === "/" },
+  { href: "/news", label: "News", icon: Newspaper, match: (pathname) => pathname.startsWith("/news") },
   { href: "/schedule", label: "Pläne", icon: CalendarDays },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },

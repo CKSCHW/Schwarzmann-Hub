@@ -86,11 +86,22 @@ export default function AdminDashboardClient({
     try {
       const result = await importWordPressArticles();
       window.location.reload(); // Reload to show new articles
+
+      let description = 'Keine neuen oder geänderten Artikel gefunden.';
+      if (result.newCount > 0 && result.updatedCount > 0) {
+        description = `${result.newCount} neue und ${result.updatedCount} bestehende Artikel wurden importiert/aktualisiert.`;
+      } else if (result.newCount > 0) {
+        description = `${result.newCount} neue Artikel wurden importiert.`;
+      } else if (result.updatedCount > 0) {
+        description = `${result.updatedCount} bestehende Artikel wurden aktualisiert.`;
+      }
+
       toast({
-        title: 'Webseiten-Import erfolgreich',
-        description: `${result.count} neue Artikel wurden importiert.`,
+        title: 'Webseiten-Import abgeschlossen',
+        description,
       });
-      if (result.count > 0) {
+
+      if (result.newCount > 0) {
           toast({
             title: 'Push-Benachrichtigung (Simuliert)',
             description: 'Eine Benachrichtigung über die neuen Artikel würde jetzt an alle Benutzer gesendet.',
@@ -259,7 +270,7 @@ export default function AdminDashboardClient({
                     Webseiten-Import
                 </CardTitle>
                 <CardDescription>
-                    Importieren Sie die neuesten Beiträge von den öffentlichen Unternehmenswebseiten.
+                    Importieren und aktualisieren Sie die neuesten Beiträge von den öffentlichen Unternehmenswebseiten.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -272,7 +283,7 @@ export default function AdminDashboardClient({
                     Webseiten-Artikel importieren
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">
-                    Sucht nach neuen Artikeln und fügt sie hier hinzu.
+                    Sucht nach neuen Artikeln und aktualisiert bestehende.
                 </p>
             </CardContent>
           </Card>

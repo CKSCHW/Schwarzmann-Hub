@@ -6,8 +6,13 @@ import type { NewsArticle } from '@/types';
 
 // Action to get articles, sorted by date
 export async function getArticles(options?: { limit?: number }): Promise<NewsArticle[]> {
-    const limit = options?.limit ?? 10;
-    const articlesSnapshot = await adminDb.collection('articles').orderBy('date', 'desc').limit(limit).get();
+    let query = adminDb.collection('articles').orderBy('date', 'desc');
+
+    if (options?.limit) {
+        query = query.limit(options.limit);
+    }
+
+    const articlesSnapshot = await query.get();
     const articles = articlesSnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
