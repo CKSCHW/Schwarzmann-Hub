@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { NewsArticle } from "@/types";
-import { ExternalLink, CalendarDays } from "lucide-react";
+import { ArrowRight, CalendarDays } from "lucide-react";
 
 interface NewsCardProps {
   article: NewsArticle;
@@ -11,10 +11,12 @@ interface NewsCardProps {
 }
 
 export default function NewsCard({ article, isFeatured = false }: NewsCardProps) {
+  const articleUrl = `/news/${article.id}`;
+
   return (
-    <Card className={`w-full overflow-hidden transition-all hover:shadow-xl ${isFeatured ? 'md:col-span-2 lg:col-span-3' : ''}`}>
+    <Card className={`w-full flex flex-col overflow-hidden transition-all hover:shadow-xl ${isFeatured ? 'md:col-span-2 lg:col-span-3' : ''}`}>
       {article.imageUrl && (
-        <div className={`relative w-full ${isFeatured ? 'aspect-[2/1]' : 'aspect-video'}`}>
+        <Link href={articleUrl} className={`relative block w-full ${isFeatured ? 'aspect-[2/1]' : 'aspect-video'}`}>
           <Image
             src={article.imageUrl}
             alt={article.title}
@@ -23,38 +25,32 @@ export default function NewsCard({ article, isFeatured = false }: NewsCardProps)
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             data-ai-hint="news article"
           />
-        </div>
+        </Link>
       )}
       <CardHeader>
         <CardTitle className={`${isFeatured ? 'text-2xl md:text-3xl' : 'text-xl'} font-headline leading-tight`}>
-          {article.link ? (
-            <Link href={article.link} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline">
+          <Link href={articleUrl} className="hover:text-primary hover:underline">
               {article.title}
-            </Link>
-          ) : (
-            article.title
-          )}
+          </Link>
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-grow">
         <p className={`text-muted-foreground ${isFeatured ? 'text-base' : 'text-sm'}`}>{article.snippet}</p>
         {isFeatured && article.content && (
           <p className="mt-2 text-sm">{article.content}</p>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+      <CardFooter className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-auto">
         <div className="flex items-center text-xs text-muted-foreground">
           <CalendarDays className="mr-1.5 h-4 w-4" />
           <span>{new Date(article.date).toLocaleDateString('de-DE')}</span>
           {article.author && <span className="ml-2">von {article.author}</span>}
         </div>
-        {article.link && (
-          <Button asChild variant="outline" size="sm">
-            <Link href={article.link} target="_blank" rel="noopener noreferrer">
-              Weiterlesen <ExternalLink className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-        )}
+        <Button asChild variant="secondary" size="sm">
+          <Link href={articleUrl}>
+            Weiterlesen <ArrowRight className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
       </CardFooter>
     </Card>
   );

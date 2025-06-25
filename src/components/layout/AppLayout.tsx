@@ -17,7 +17,7 @@ import {
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarDays, LayoutDashboard, Zap, Bell, LogOut } from "lucide-react";
+import { Home, CalendarDays, LayoutDashboard, Zap, Bell, LogOut, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
@@ -27,12 +27,14 @@ type NavItem = {
   label: string;
   icon: React.ElementType;
   match?: (pathname: string) => boolean;
+  adminOnly?: boolean;
 };
 
 const navItems: NavItem[] = [
   { href: "/", label: "Startseite", icon: Home, match: (pathname) => pathname === "/" },
   { href: "/schedule", label: "Pläne", icon: CalendarDays },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
 ];
 
 const AppHeader = () => {
@@ -94,7 +96,7 @@ const NotificationBell = () => {
 };
 
 const UserMenu = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -117,6 +119,7 @@ const UserMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+        {isAdmin && <DropdownMenuLabel className="text-xs font-normal text-accent -mt-2">Administrator</DropdownMenuLabel>}
         <DropdownMenuSeparator />
         <DropdownMenuItem disabled>Profil</DropdownMenuItem>
         <DropdownMenuItem disabled>Einstellungen</DropdownMenuItem>
@@ -133,7 +136,7 @@ const UserMenu = () => {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
 
   React.useEffect(() => {
     if (loading) return;
@@ -181,6 +184,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarContent>
             <SidebarMenu>
               {navItems.map((item) => {
+                if (item.adminOnly && !isAdmin) {
+                  return null;
+                }
                 const isActive = item.match ? item.match(pathname) : pathname.startsWith(item.href);
                 return (
                   <SidebarMenuItem key={item.href}>
