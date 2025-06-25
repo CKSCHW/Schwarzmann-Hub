@@ -34,13 +34,19 @@ try {
 }
 
 if (!getApps().length) {
-    if (!serviceAccount || !serviceAccount.project_id || serviceAccount.type !== 'service_account') {
-        throw new Error(`The Firebase service account credentials in .env.local seem to be parsed but are invalid.
-    The JSON object is missing the required 'project_id' field or the 'type' is not 'service_account'.
-    This usually means you have copied the wrong value.
-    Please ensure you have downloaded a NEW service account key from your Firebase project settings and copied the ENTIRE JSON object.
-    Then, restart the development server.`);
+    // Enhanced validation to provide a single, more helpful error message.
+    if (!serviceAccount || serviceAccount.type !== 'service_account' || !serviceAccount.project_id) {
+        throw new Error(`The Firebase service account key in .env.local is invalid. It seems to be missing required fields like 'type' or 'project_id'. This can happen if you copy the wrong value or an incomplete JSON object.
+
+Please follow these steps carefully:
+1. Go to your Firebase project console > Project Settings > Service Accounts.
+2. Click "Generate new private key" to download a new, complete key file.
+3. Open the downloaded file and copy the ENTIRE JSON content.
+4. Paste it into your .env.local file.
+5. Restart your development server.
+`);
     }
+    
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
     });

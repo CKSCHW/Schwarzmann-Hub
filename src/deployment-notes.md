@@ -26,14 +26,20 @@ sudo rm -rf /etc/nginx/
 sudo rm -rf /var/lib/nginx/
 ```
 
-### 4. Clean and Update Apt
+### 4. Reload the Systemd Daemon
+This tells the system to forget about the old, broken Nginx service configuration. This might resolve the "Device or resource busy" error.
+```bash
+sudo systemctl daemon-reload
+```
+
+### 5. Clean and Update Apt
 This clears the local package cache and fetches the latest lists from the repositories.
 ```bash
 sudo apt-get clean
 sudo apt-get update
 ```
 
-### 5. Install Nginx Again
+### 6. Install Nginx Again
 With everything truly gone, this installation should now succeed.
 ```bash
 sudo apt-get install nginx -y
