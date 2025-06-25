@@ -29,7 +29,8 @@ export const adminAuth = getAuth(adminApp);
 
 // Helper function to get the current user on the server side
 export async function getCurrentUser() {
-  const sessionCookie = cookies().get('__session')?.value;
+  const cookieStore = cookies();
+  const sessionCookie = cookieStore.get('__session')?.value;
   if (!sessionCookie) {
     return null;
   }

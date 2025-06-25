@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ export default function NewsCard({ article, isFeatured = false }: NewsCardProps)
             src={article.imageUrl}
             alt={article.title}
             fill
+            unoptimized
             className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             data-ai-hint="news article"

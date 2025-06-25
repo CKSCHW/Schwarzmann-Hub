@@ -1,3 +1,4 @@
+
 import { getArticle } from '@/actions/newsActions';
 import MarkAsReadClientTrigger from './MarkAsRead';
 import { getCurrentUser } from '@/lib/firebase-admin';
@@ -43,6 +44,7 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
               src={article.imageUrl}
               alt={article.title}
               fill
+              unoptimized
               className="object-cover"
               sizes="(max-width: 1024px) 100vw, 896px"
               priority
