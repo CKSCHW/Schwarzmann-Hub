@@ -36,9 +36,6 @@ export default function NewsCard({ article, isFeatured = false }: NewsCardProps)
       </CardHeader>
       <CardContent className="flex-grow">
         <p className={`text-muted-foreground ${isFeatured ? 'text-base' : 'text-sm'}`}>{article.snippet}</p>
-        {isFeatured && article.content && (
-          <p className="mt-2 text-sm">{article.content}</p>
-        )}
       </CardContent>
       <CardFooter className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mt-auto">
         <div className="flex items-center text-xs text-muted-foreground">

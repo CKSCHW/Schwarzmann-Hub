@@ -19,8 +19,8 @@ function extractFirstVcImageId(content: string): string | null {
         .replace(/“|”|„|″/g, '"') // Smart quotes to double
         .replace(/‘|’/g, "'");    // Smart single quotes to single
 
-    // Regex to find image="123" in a vc_single_image shortcode. Handles single or double quotes.
-    const regex = /vc_single_image[^\]]+?image\s*=\s*["'](\d+)["']/;
+    // Regex to find image="123" in a vc_single_image shortcode. Handles optional single or double quotes.
+    const regex = /vc_single_image[^\]]+?image\s*=\s*["']?(\d+)["']?/;
     const match = normalized.match(regex);
     return match ? match[1] : null;
 }
@@ -46,6 +46,39 @@ async function fetchWpImageUrlById(id: string): Promise<string | null> {
         }
     }
     return null;
+}
+
+// Helper to replace [vc_single_image] shortcodes with <img> tags
+async function processShortcodes(content: string): Promise<string> {
+    if (!content) return '';
+
+    const normalized = content
+        .replace(/“|”|„|″/g, '"')
+        .replace(/‘|’/g, "'");
+
+    const shortcodeRegex = /\[vc_single_image[^\]]+?image\s*=\s*["']?(\d+)["']?[^\]]*\]/g;
+    
+    let processedContent = normalized;
+    const matches = Array.from(normalized.matchAll(shortcodeRegex));
+
+    for (const match of matches) {
+        const shortcode = match[0];
+        const imageId = match[1];
+        if (imageId) {
+            const imageUrl = await fetchWpImageUrlById(imageId);
+            if (imageUrl) {
+                // Replace the shortcode with a standard HTML <img> tag.
+                // The 'prose' Tailwind classes will style this automatically.
+                const imgTag = `<img src="${imageUrl}" alt="Bild aus Artikel" class="mx-auto my-4 rounded-lg shadow-md" />`;
+                processedContent = processedContent.replace(shortcode, imgTag);
+            } else {
+                 // If the image URL couldn't be fetched, remove the shortcode to avoid displaying it as text.
+                 processedContent = processedContent.replace(shortcode, '');
+            }
+        }
+    }
+
+    return processedContent;
 }
 
 
@@ -99,13 +132,15 @@ export async function importWordPressArticles() {
                       }
                   }
               }
-
+              
+              // Process content to replace shortcodes with <img> tags
+              const processedContent = await processShortcodes(article.content.rendered);
               const authorName = article._embedded?.author?.[0]?.name;
 
               const newArticle: Omit<NewsArticle, 'id'> = {
                   title: stripHtml(article.title.rendered),
                   snippet: stripHtml(article.excerpt.rendered),
-                  content: article.content.rendered,
+                  content: processedContent, // Save the processed content
                   imageUrl: imageUrl,
                   date: new Date(article.date).toISOString(),
                   author: authorName || source.author,
