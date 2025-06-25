@@ -48,7 +48,7 @@ async function fetchWpImageUrlById(id: string): Promise<string | null> {
     return null;
 }
 
-// Helper to replace [vc_single_image] shortcodes with <img> tags
+// Helper to replace [vc_single_image] shortcodes with <img> tags and remove other vc_ shortcodes
 async function processShortcodes(content: string): Promise<string> {
     if (!content) return '';
 
@@ -56,10 +56,10 @@ async function processShortcodes(content: string): Promise<string> {
         .replace(/“|”|„|″/g, '"')
         .replace(/‘|’/g, "'");
 
-    const shortcodeRegex = /\[vc_single_image[^\]]+?image\s*=\s*["']?(\d+)["']?[^\]]*\]/g;
+    const imageShortcodeRegex = /\[vc_single_image[^\]]+?image\s*=\s*["']?(\d+)["']?[^\]]*\]/g;
     
     let processedContent = normalized;
-    const matches = Array.from(normalized.matchAll(shortcodeRegex));
+    const matches = Array.from(normalized.matchAll(imageShortcodeRegex));
 
     for (const match of matches) {
         const shortcode = match[0];
@@ -77,6 +77,10 @@ async function processShortcodes(content: string): Promise<string> {
             }
         }
     }
+    
+    // Remove all other Visual Composer shortcodes (like [vc_row], [/vc_column], etc.)
+    const remainingShortcodesRegex = /\[\/?vc_[^\]]*\]/g;
+    processedContent = processedContent.replace(remainingShortcodesRegex, '');
 
     return processedContent;
 }
