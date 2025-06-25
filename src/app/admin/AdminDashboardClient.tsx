@@ -13,7 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { BellRing, Eye, Loader2, Newspaper, UploadCloud, Globe } from 'lucide-react';
+import { Eye, Loader2, Newspaper, UploadCloud, Globe } from 'lucide-react';
 import { createArticle, importWordPressArticles } from '@/actions/adminActions';
 import type { NewsArticle, ReadReceiptWithUser } from '@/types';
 
@@ -75,13 +75,6 @@ export default function AdminDashboardClient({
         description,
       });
 
-      if (result.newCount > 0) {
-          toast({
-            title: 'Push-Benachrichtigung (Simuliert)',
-            description: 'Eine Benachrichtigung über die neuen Artikel würde jetzt an alle Benutzer gesendet.',
-            variant: 'default',
-        });
-      }
     } catch (error) {
       console.error(error);
       toast({
@@ -110,12 +103,6 @@ export default function AdminDashboardClient({
       toast({
         title: 'Artikel erstellt',
         description: 'Der neue Artikel wurde erfolgreich gespeichert.',
-      });
-      // Here you would trigger the push notification
-      toast({
-        title: 'Push-Benachrichtigung (Simuliert)',
-        description: 'Eine Benachrichtigung würde jetzt an alle Benutzer gesendet.',
-        variant: 'default',
       });
     } catch (error) {
       toast({
@@ -206,10 +193,6 @@ export default function AdminDashboardClient({
                       {isCreating ? <Loader2 className="animate-spin mr-2" /> : <Newspaper className="mr-2" />}
                       Artikel veröffentlichen
                     </Button>
-                     <Button type="button" variant="secondary" disabled>
-                        <BellRing className="mr-2" />
-                        Push-Benachrichtigung senden (Nächster Schritt)
-                     </Button>
                    </div>
                 </form>
               </Form>
