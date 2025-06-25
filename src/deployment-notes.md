@@ -70,7 +70,7 @@ This will download all your project files into a new folder named `my-app` insid
 
 ### 3. Install Dependencies and Build
 
-Inside your project directory (`/var/www/my-app`), install the required packages and build the app for production.
+Inside your project directory (`/var/w ww/my-app`), install the required packages and build the app for production.
 
 ```bash
 # Install project dependencies
@@ -195,8 +195,7 @@ sudo nginx -t
 # If the test is successful, restart Nginx to apply the changes
 sudo systemctl restart nginx
 ```
-
-Your application should now be live! You can manage it using commands like `pm2 list`, `pm2 stop my-app`, and `pm2 logs my-app`.
+Your application should now be live on HTTP. The next section will guide you through adding HTTPS.
 
 ### 7. Creating Users and Admins
 
@@ -224,3 +223,45 @@ To grant a user admin privileges, you need to set a "custom claim" on their acco
     npm run set-admin -- user-email@example.com
     ```
 4.  You should see a success message. The next time this user logs in, they will have access to the Admin Dashboard.
+
+### 8. (Recommended) Enable HTTPS with a Free SSL Certificate
+
+This final step secures your application by enabling HTTPS. We will use **Let's Encrypt** to get a free SSL certificate and **Certbot** to automate the process.
+
+**A. Install Certbot**
+
+Certbot is the tool that fetches the certificate and configures Nginx for you.
+
+```bash
+# Update your package list
+sudo apt update
+# Install certbot and its Nginx plugin
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+**B. Obtain the SSL Certificate**
+
+Run Certbot and tell it to configure Nginx. Make sure your domain name is pointing to your server's IP address before running this.
+
+```bash
+# Replace your_domain.com with your actual domain
+sudo certbot --nginx -d your_domain.com
+```
+
+Certbot will ask you a few questions:
+1.  **Enter an email address:** This is for renewal notices and security alerts.
+2.  **Agree to the Terms of Service:** Read them and press `Y` to agree.
+3.  **Share email with EFF:** You can choose `Y` or `N`.
+4.  **Redirect HTTP to HTTPS:** It will ask if you want to redirect all HTTP traffic to HTTPS. **You should choose option 2 (Redirect).** This is the most secure option.
+
+If successful, Certbot will automatically edit your `/etc/nginx/sites-available/my-app` file to add the SSL configuration and then restart Nginx. Your site will now be served over HTTPS!
+
+**C. Verify Automatic Renewal**
+
+Let's Encrypt certificates are valid for 90 days. Certbot automatically sets up a task on your server to renew them before they expire. You can test the renewal process with this command:
+
+```bash
+sudo certbot renew --dry-run
+```
+
+If it completes without errors, you're all set. You now have a secure, deployed Next.js application.
