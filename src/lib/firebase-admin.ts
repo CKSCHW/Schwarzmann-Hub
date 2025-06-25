@@ -7,59 +7,59 @@ import { cookies } from 'next/headers';
 
 const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-// Check if the environment variable is missing or still has the placeholder value.
-if (!serviceAccountString || serviceAccountString === 'PASTE_YOUR_FIREBASE_SERVICE_ACCOUNT_KEY_JSON_HERE') {
-  throw new Error(`CRITICAL CONFIGURATION ERROR: The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set in your .env.local file.
+// This function checks the service account key and returns a specific error message if invalid.
+function getInitializationError(): string | null {
+    // 1. Check if the key is missing or is the placeholder value.
+    if (!serviceAccountString || serviceAccountString.includes('PASTE_YOUR_FIREBASE_SERVICE_ACCOUNT_KEY')) {
+        return `The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set in your .env.local file.`;
+    }
 
-  Please follow these steps:
-  1. Open the .env.local file in the root of your project.
-  2. Go to your Firebase project console > Project Settings > Service Accounts.
-  3. Click "Generate new private key" to download a JSON file.
-  4. Copy the ENTIRE content of that JSON file.
-  5. Paste it as the value for FIREBASE_SERVICE_ACCOUNT_KEY. For example:
-     FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", ...}'
-  
-  After adding the key, you must RESTART your development server.`);
+    try {
+        const serviceAccount = JSON.parse(serviceAccountString);
+
+        // 2. Check if the parsed key has the required fields.
+        if (serviceAccount.type !== 'service_account' || !serviceAccount.project_id || !serviceAccount.private_key) {
+            return `The Firebase service account key in .env.local is invalid. It seems to be missing required fields like 'type', 'project_id', or 'private_key'. This usually means you have copied an incomplete or incorrect JSON object.`;
+        }
+        
+        // 3. If everything is fine, initialize the app if it hasn't been already.
+        if (getApps().length === 0) {
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+            });
+        }
+        return null; // Success!
+    } catch (e) {
+        // 4. Catch errors from JSON.parse(), which means the key is malformed.
+        return `The Firebase service account key in .env.local is not valid JSON. Please ensure you have copied the entire, unmodified key file.`;
+    }
 }
 
-if (getApps().length === 0) {
-    let serviceAccount;
-    try {
-        serviceAccount = JSON.parse(serviceAccountString);
+const initializationError = getInitializationError();
 
-        // This check ensures the parsed object has the necessary properties.
-        if (serviceAccount.type !== 'service_account' || !serviceAccount.project_id) {
-            // Force the error by nullifying the object if it's invalid.
-            serviceAccount = null; 
-        }
-    } catch (e) {
-        // If JSON parsing fails, it's an invalid key.
-        serviceAccount = null;
-    }
+// If there was any error, throw a single, comprehensive error message.
+if (initializationError) {
+    throw new Error(`
+================================================================================
+CRITICAL CONFIGURATION ERROR
+================================================================================
+${initializationError}
 
-    // This single, comprehensive check will now catch any issue with the key.
-    if (!serviceAccount) {
-        throw new Error(`CRITICAL CONFIGURATION ERROR: The Firebase service account key in .env.local is invalid. It is either not valid JSON or is missing required fields like 'type' and 'project_id'.
-
-This is not a code bug. The application is correctly stopping to prevent a crash. You MUST fix your .env.local file.
+This is not a code bug. The application is correctly stopping to prevent a crash.
+You MUST fix the value in your .env.local file.
 
 Please follow these steps carefully:
-1. Go to your Firebase project console > Project Settings > Service Accounts.
-2. Click "Generate new private key" to download a new, complete key file.
-3. Open the downloaded file and copy the ENTIRE JSON content.
-4. Paste it into your .env.local file.
-5. Restart your development server.
+1.  Go to your Firebase project console > Project Settings > Service Accounts.
+2.  Click "Generate new private key" to download a new, complete key file.
+3.  Open the downloaded file and copy the ENTIRE JSON content.
+4.  Paste it into your .env.local file.
+5.  You MUST RESTART your development server for the changes to take effect.
+================================================================================
 `);
-    }
-
-    admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-    });
 }
 
 export const adminDb = getFirestore();
 export const adminAuth = getAuth();
-
 
 // Helper function to get the current user on the server side
 export async function getCurrentUser() {
