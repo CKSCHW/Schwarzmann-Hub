@@ -2,12 +2,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { noStore } from 'next/cache';
 import { adminDb, adminStorage, getCurrentUser } from '@/lib/firebase-admin';
 import type { ScheduleFile } from '@/types';
 
 async function verifyAdmin() {
-    noStore();
     const user = await getCurrentUser();
     if (!user || user.isAdmin !== true) {
         throw new Error('Unauthorized');

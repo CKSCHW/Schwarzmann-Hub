@@ -1,11 +1,12 @@
 
-import { noStore } from 'next/cache';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, Newspaper, CalendarCheck2, Users, Settings } from "lucide-react";
 import Image from "next/image";
 import { getAppointmentsForUser } from "@/actions/dashboardActions";
+
+export const dynamic = 'force-dynamic';
 
 const quickAccessItems = [
   {
@@ -41,7 +42,6 @@ const quickAccessItems = [
 ];
 
 export default async function DashboardPage() {
-  noStore();
   const appointments = await getAppointmentsForUser();
 
   return (

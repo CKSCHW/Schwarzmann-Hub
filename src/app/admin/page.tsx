@@ -1,6 +1,5 @@
 
 import { redirect } from 'next/navigation';
-import { noStore } from 'next/cache';
 import { getCurrentUser } from '@/lib/firebase-admin';
 import AdminDashboardClient from './AdminDashboardClient';
 import { getNewsArticlesWithReadCounts, getAppointments, getUsersWithGroups } from '@/actions/adminActions';
@@ -8,8 +7,9 @@ import AppointmentManager from './AppointmentManager';
 import UserGroupManager from './UserGroupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminPage() {
-  noStore();
   const user = await getCurrentUser();
 
   if (!user || !user.isAdmin) {
