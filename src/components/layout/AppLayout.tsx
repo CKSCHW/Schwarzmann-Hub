@@ -191,16 +191,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 const isActive = item.match ? item.match(pathname) : pathname.startsWith(item.href);
                 return (
                   <SidebarMenuItem key={item.href}>
-                    <Link href={item.href} legacyBehavior passHref>
-                      <SidebarMenuButton
-                        isActive={isActive}
-                        tooltip={{ children: item.label, side: "right", align: "center" }}
-                        className="justify-start"
-                      >
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={{ children: item.label, side: "right", align: "center" }}
+                      className="justify-start"
+                    >
+                      <Link href={item.href}>
                         <item.icon className="h-5 w-5" />
                         <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                      </SidebarMenuButton>
-                    </Link>
+                      </Link>
+                    </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
               })}
