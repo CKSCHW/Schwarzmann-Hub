@@ -1,4 +1,3 @@
-
 import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,13 +45,13 @@ export default function NewsCard({ article, isFeatured = false }: NewsCardProps)
       <CardFooter className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div className="flex items-center text-xs text-muted-foreground">
           <CalendarDays className="mr-1.5 h-4 w-4" />
-          <span>{new Date(article.date).toLocaleDateString()}</span>
-          {article.author && <span className="ml-2">by {article.author}</span>}
+          <span>{new Date(article.date).toLocaleDateString('de-DE')}</span>
+          {article.author && <span className="ml-2">von {article.author}</span>}
         </div>
         {article.link && (
           <Button asChild variant="outline" size="sm">
             <Link href={article.link} target="_blank" rel="noopener noreferrer">
-              Read More <ExternalLink className="ml-2 h-4 w-4" />
+              Weiterlesen <ExternalLink className="ml-2 h-4 w-4" />
             </Link>
           </Button>
         )}

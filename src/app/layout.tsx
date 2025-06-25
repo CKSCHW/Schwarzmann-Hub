@@ -1,12 +1,22 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import AppLayout from '@/components/layout/AppLayout';
 
 export const metadata: Metadata = {
-  title: 'Work News Hub',
-  description: 'Stay updated with the latest company news and schedules.',
+  title: 'Elektro Schwarzmann',
+  description: 'Interne App für News und Wocheneinteilungen von Elektro Schwarzmann.',
+  applicationName: "Elektro Schwarzmann",
+  appleWebApp: {
+    capable: true,
+    title: "Schwarzmann App",
+    statusBarStyle: "default",
+  },
 };
+
+export const viewport: Viewport = {
+  themeColor: '#003366',
+}
 
 export default function RootLayout({
   children,
@@ -14,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="de" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

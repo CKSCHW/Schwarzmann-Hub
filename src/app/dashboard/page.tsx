@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -7,33 +6,33 @@ import Image from "next/image";
 
 const quickAccessItems = [
   {
-    title: "Latest News",
-    description: "Catch up on all company announcements and updates.",
+    title: "Aktuelle News",
+    description: "Lesen Sie alle Unternehmensankündigungen und Updates.",
     icon: Newspaper,
     href: "/",
-    cta: "View News",
+    cta: "News ansehen",
   },
   {
-    title: "Weekly Schedules",
-    description: "Access your team's Wocheneinteilungen.",
+    title: "Wochenpläne",
+    description: "Greifen Sie auf die Wocheneinteilungen Ihres Teams zu.",
     icon: CalendarCheck2,
     href: "/schedule",
-    cta: "View Schedules",
+    cta: "Pläne ansehen",
   },
   {
-    title: "Team Directory",
-    description: "Find contact information for your colleagues.",
+    title: "Teamverzeichnis",
+    description: "Finden Sie Kontaktinformationen Ihrer Kollegen.",
     icon: Users,
     href: "#", // Placeholder for future feature
-    cta: "Open Directory",
+    cta: "Verzeichnis öffnen",
     disabled: true,
   },
   {
-    title: "Account Settings",
-    description: "Manage your profile and notification preferences.",
+    title: "Kontoeinstellungen",
+    description: "Verwalten Sie Ihr Profil und Ihre Benachrichtigungen.",
     icon: Settings,
     href: "#", // Placeholder
-    cta: "Go to Settings",
+    cta: "Zu den Einstellungen",
     disabled: true,
   }
 ];
@@ -45,19 +44,19 @@ export default function DashboardPage() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-lg bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-primary-foreground shadow-lg">
           <div>
             <h1 id="dashboard-welcome-title" className="text-3xl font-headline font-semibold mb-2">
-              Welcome to Your Dashboard!
+              Willkommen im Dashboard!
             </h1>
             <p className="text-lg text-primary-foreground/90">
-              Your central hub for company news, schedules, and resources.
+              Ihre zentrale Anlaufstelle für Neuigkeiten, Pläne und Ressourcen.
             </p>
           </div>
-           <Image src="https://placehold.co/300x200.png" alt="Dashboard illustration" width={300} height={200} className="rounded-md object-cover hidden md:block" data-ai-hint="team work" />
+           <Image src="https://placehold.co/300x200.png" alt="Dashboard Illustration" width={300} height={200} className="rounded-md object-cover hidden md:block" data-ai-hint="team work" />
         </div>
       </section>
 
       <section aria-labelledby="quick-access-title">
         <h2 id="quick-access-title" className="text-2xl font-headline font-semibold mb-6">
-          Quick Access
+          Schnellzugriff
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {quickAccessItems.map((item) => (
@@ -85,29 +84,28 @@ export default function DashboardPage() {
       <section aria-labelledby="upcoming-events-title">
          <Card>
             <CardHeader>
-                <CardTitle className="text-xl font-headline">Upcoming Events & Deadlines</CardTitle>
-                <CardDescription>Stay informed about important dates.</CardDescription>
+                <CardTitle className="text-xl font-headline">Anstehende Termine</CardTitle>
+                <CardDescription>Bleiben Sie über wichtige Termine informiert.</CardDescription>
             </CardHeader>
             <CardContent>
-                {/* Placeholder for events list or calendar integration */}
                 <ul className="space-y-3">
                     <li className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
                         <div>
-                            <p className="font-medium">Quarterly Review Meeting</p>
-                            <p className="text-sm text-muted-foreground">August 15, 2024 - 10:00 AM</p>
+                            <p className="font-medium">Betriebsversammlung</p>
+                            <p className="text-sm text-muted-foreground">15. August 2024 - 10:00 Uhr</p>
                         </div>
                         <Button variant="outline" size="sm" disabled>Details</Button>
                     </li>
                     <li className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
                         <div>
-                            <p className="font-medium">Project Alpha Deadline</p>
-                            <p className="text-sm text-muted-foreground">August 20, 2024</p>
+                            <p className="font-medium">Frist für Projekt Alpha</p>
+                            <p className="text-sm text-muted-foreground">20. August 2024</p>
                         </div>
-                         <Button variant="outline" size="sm" disabled>View Project</Button>
+                         <Button variant="outline" size="sm" disabled>Projekt ansehen</Button>
                     </li>
                 </ul>
                 <p className="text-center text-muted-foreground mt-4">
-                    More event details will be available soon.
+                    Weitere Termindetails werden in Kürze verfügbar sein.
                 </p>
             </CardContent>
          </Card>

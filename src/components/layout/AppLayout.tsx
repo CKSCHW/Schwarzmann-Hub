@@ -1,9 +1,9 @@
-
 "use client";
 
 import *
 as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   SidebarProvider,
@@ -19,7 +19,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarDays, LayoutDashboard, Briefcase, UserCircle, Bell } from "lucide-react";
+import { Home, CalendarDays, LayoutDashboard, Zap, UserCircle, Bell } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"; // Sheet is used internally by Sidebar for mobile
@@ -32,8 +32,8 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/", label: "Home", icon: Home, match: (pathname) => pathname === "/" },
-  { href: "/schedule", label: "Schedule", icon: CalendarDays },
+  { href: "/", label: "Startseite", icon: Home, match: (pathname) => pathname === "/" },
+  { href: "/schedule", label: "Pläne", icon: CalendarDays },
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ];
 
@@ -48,15 +48,14 @@ const AppHeader = () => {
           size="icon"
           className="shrink-0 md:hidden"
           onClick={toggleSidebar}
-          aria-label="Toggle navigation menu"
+          aria-label="Navigationsmenü umschalten"
         >
-          <Briefcase className="h-5 w-5" />
+          <Zap className="h-5 w-5" />
         </Button>
       )}
       <div className="flex w-full items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <Briefcase className="h-6 w-6 text-primary" />
-          <span className="font-headline text-xl font-semibold">Work News Hub</span>
+         <Link href="/" className="flex items-center gap-2 font-semibold">
+          <Image src="https://www.elektro-schwarzmann.at/images/logo.png" alt="Elektro Schwarzmann Logo" width={180} height={40} />
         </Link>
         <div className="flex items-center gap-4">
           <NotificationBell />
@@ -68,10 +67,9 @@ const AppHeader = () => {
 };
 
 const NotificationBell = () => {
-  // In a real app, this would fetch and display notifications
   const [notifications, setNotifications] = React.useState([
-    { id: 1, message: "New schedule posted for next week." },
-    { id: 2, message: "Maintenance alert: System downtime on Sunday." },
+    { id: 1, message: "Neuer Plan für nächste Woche verfügbar." },
+    { id: 2, message: "Wartungshinweis: Systemausfall am Sonntag." },
   ]);
   const [hasUnread, setHasUnread] = React.useState(true);
 
@@ -86,11 +84,11 @@ const NotificationBell = () => {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
             </span>
           )}
-          <span className="sr-only">Notifications</span>
+          <span className="sr-only">Benachrichtigungen</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+        <DropdownMenuLabel>Benachrichtigungen</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {notifications.length > 0 ? (
           notifications.map((notification) => (
@@ -99,11 +97,11 @@ const NotificationBell = () => {
             </DropdownMenuItem>
           ))
         ) : (
-          <DropdownMenuItem disabled>No new notifications</DropdownMenuItem>
+          <DropdownMenuItem disabled>Keine neuen Benachrichtigungen</DropdownMenuItem>
         )}
          <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => { setNotifications([]); setHasUnread(false); }} className="text-center text-primary">
-            Clear all
+        <DropdownMenuItem onClick={() => { setNotifications([]); setHasUnread(false); }} className="justify-center text-primary">
+            Alle löschen
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -116,19 +114,19 @@ const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src="https://placehold.co/40x40.png" alt="User avatar" data-ai-hint="user avatar" />
-            <AvatarFallback>U</AvatarFallback>
+            <AvatarImage src="https://placehold.co/40x40.png" alt="Benutzer-Avatar" data-ai-hint="user avatar" />
+            <AvatarFallback>ES</AvatarFallback>
           </Avatar>
-          <span className="sr-only">Toggle user menu</span>
+          <span className="sr-only">Benutzermenü umschalten</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuLabel>Mein Konto</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Profile</DropdownMenuItem>
-        <DropdownMenuItem>Settings</DropdownMenuItem>
+        <DropdownMenuItem>Profil</DropdownMenuItem>
+        <DropdownMenuItem>Einstellungen</DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>Logout</DropdownMenuItem>
+        <DropdownMenuItem>Abmelden</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -142,8 +140,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar side="left" variant="sidebar" collapsible="icon">
         <SidebarHeader className="p-4">
           <Link href="/" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
-            <Briefcase className="h-7 w-7 text-primary transition-all group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8" />
-            <span className="font-headline text-2xl font-semibold group-data-[collapsible=icon]:hidden">WorkHub</span>
+            <Zap className="h-7 w-7 text-primary transition-all group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8" />
+            <span className="font-headline text-2xl font-semibold group-data-[collapsible=icon]:hidden">Schwarzmann</span>
           </Link>
         </SidebarHeader>
         <SidebarContent>
@@ -169,7 +167,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </SidebarContent>
         <SidebarFooter className="p-4 border-t border-sidebar-border group-data-[collapsible=icon]:hidden">
           <p className="text-xs text-sidebar-foreground/70">
-            © {new Date().getFullYear()} Work News Hub
+            © {new Date().getFullYear()} Elektro Schwarzmann
           </p>
         </SidebarFooter>
       </Sidebar>
