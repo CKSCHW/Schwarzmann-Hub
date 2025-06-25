@@ -139,12 +139,14 @@ export async function importWordPressArticles() {
               
               // Process content to replace shortcodes with <img> tags
               const processedContent = await processShortcodes(article.content.rendered);
+              // Also process the snippet to remove any remaining shortcodes
+              const processedSnippet = await processShortcodes(article.excerpt.rendered);
               const authorName = article._embedded?.author?.[0]?.name;
 
               const newArticle: Omit<NewsArticle, 'id'> = {
                   title: stripHtml(article.title.rendered),
-                  snippet: article.excerpt.rendered,
-                  content: processedContent, // Save the processed content
+                  snippet: processedSnippet,
+                  content: processedContent,
                   imageUrl: imageUrl,
                   date: new Date(article.date).toISOString(),
                   author: authorName || source.author,
