@@ -55,7 +55,7 @@ const AppHeader = () => {
       )}
       <div className="flex w-full items-center justify-between">
          <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Image src="https://www.elektro-schwarzmann.at/images/logo.png" alt="Elektro Schwarzmann Logo" width={180} height={40} />
+          <Image src="https://www.elektro-schwarzmann.at/images/logo_ci.png" alt="Elektro Schwarzmann Logo" width={180} height={41} />
         </Link>
         <div className="flex items-center gap-4">
           <NotificationBell />
