@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment } from '@/types';
+import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser } from '@/types';
 
 // Helper function to strip HTML tags
 function stripHtml(html: string): string {
@@ -220,7 +220,15 @@ export async function getNewsArticlesWithReadCounts() {
     const userIds = [...new Set(receipts.map(r => r.userId))];
     const userRecords = userIds.length > 0 ? await adminAuth.getUsers(userIds.map(uid => ({ uid }))) : { users: [] };
     
-    const userMap = new Map(userRecords.users.map(u => [u.uid, u]));
+    const userMap = new Map(userRecords.users.map(u => {
+        const simpleUser: SimpleUser = {
+            uid: u.uid,
+            email: u.email,
+            displayName: u.displayName,
+            photoURL: u.photoURL,
+        };
+        return [u.uid, simpleUser];
+    }));
 
     const receiptsWithUsers: ReadReceiptWithUser[] = receipts.map(receipt => ({
         ...receipt,

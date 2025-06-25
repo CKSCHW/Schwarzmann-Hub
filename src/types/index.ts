@@ -1,6 +1,4 @@
 
-import type { UserRecord } from "firebase-admin/auth";
-
 export interface NewsArticle {
   id: string;
   title: string;
@@ -49,6 +47,14 @@ export interface ReadReceipt {
     readAt: string; // Stored as ISO string
 }
 
+// A simplified, client-safe user object that doesn't import server-only packages.
+export interface SimpleUser {
+    uid: string;
+    email?: string;
+    displayName?: string;
+    photoURL?: string;
+}
+
 export interface ReadReceiptWithUser extends ReadReceipt {
-    user?: UserRecord;
+    user?: SimpleUser;
 }
