@@ -9,10 +9,10 @@ const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 // Check if the environment variable is missing or still has the placeholder value.
 if (!serviceAccountString || serviceAccountString === 'PASTE_YOUR_FIREBASE_SERVICE_ACCOUNT_KEY_JSON_HERE') {
-  throw new Error(`The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set correctly in your .env.local file.
-  
+  throw new Error(`CRITICAL CONFIGURATION ERROR: The FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set in your .env.local file.
+
   Please follow these steps:
-  1. Open the .env.local file.
+  1. Open the .env.local file in the root of your project.
   2. Go to your Firebase project console > Project Settings > Service Accounts.
   3. Click "Generate new private key" to download a JSON file.
   4. Copy the ENTIRE content of that JSON file.
@@ -22,21 +22,26 @@ if (!serviceAccountString || serviceAccountString === 'PASTE_YOUR_FIREBASE_SERVI
   After adding the key, you must RESTART your development server.`);
 }
 
-let serviceAccount;
-try {
-  serviceAccount = JSON.parse(serviceAccountString);
-} catch (e) {
-  console.error("Error parsing FIREBASE_SERVICE_ACCOUNT_KEY:", e);
-  throw new Error(`Failed to parse the FIREBASE_SERVICE_ACCOUNT_KEY.
-  It looks like it is set in .env.local, but it is not valid JSON.
-  Please make sure you have copied the entire contents of the service account file correctly and that there are no syntax errors.
-  Then, restart the development server.`);
-}
+if (getApps().length === 0) {
+    let serviceAccount;
+    try {
+        serviceAccount = JSON.parse(serviceAccountString);
 
-if (!getApps().length) {
-    // Enhanced validation to provide a single, more helpful error message.
-    if (!serviceAccount || serviceAccount.type !== 'service_account' || !serviceAccount.project_id) {
-        throw new Error(`The Firebase service account key in .env.local is invalid. It seems to be missing required fields like 'type' or 'project_id'. This can happen if you copy the wrong value or an incomplete JSON object.
+        // This check ensures the parsed object has the necessary properties.
+        if (serviceAccount.type !== 'service_account' || !serviceAccount.project_id) {
+            // Force the error by nullifying the object if it's invalid.
+            serviceAccount = null; 
+        }
+    } catch (e) {
+        // If JSON parsing fails, it's an invalid key.
+        serviceAccount = null;
+    }
+
+    // This single, comprehensive check will now catch any issue with the key.
+    if (!serviceAccount) {
+        throw new Error(`CRITICAL CONFIGURATION ERROR: The Firebase service account key in .env.local is invalid. It is either not valid JSON or is missing required fields like 'type' and 'project_id'.
+
+This is not a code bug. The application is correctly stopping to prevent a crash. You MUST fix your .env.local file.
 
 Please follow these steps carefully:
 1. Go to your Firebase project console > Project Settings > Service Accounts.
@@ -46,7 +51,7 @@ Please follow these steps carefully:
 5. Restart your development server.
 `);
     }
-    
+
     admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
     });
