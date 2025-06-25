@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
       value: sessionCookie,
       maxAge: expiresIn,
       httpOnly: true,
-      secure: true,
+      // The 'secure' flag should only be used in production over HTTPS
+      secure: process.env.NODE_ENV === 'production',
     };
 
     const response = NextResponse.json({ status: 'success' }, { status: 200 });
