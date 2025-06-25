@@ -1,3 +1,4 @@
+
 import type { NewsArticle, ScheduleFile } from "@/types";
 
 export const mockFeaturedNews: NewsArticle = {
@@ -9,7 +10,6 @@ export const mockFeaturedNews: NewsArticle = {
   date: "2024-07-28",
   author: "Geschäftsführung",
   category: "Events",
-  link: "#"
 };
 
 export const mockRecentNews: NewsArticle[] = [
@@ -21,7 +21,6 @@ export const mockRecentNews: NewsArticle[] = [
     date: "2024-07-27",
     author: "Personalabteilung",
     category: "Unternehmen",
-    link: "#"
   },
   {
     id: "3",
@@ -31,7 +30,6 @@ export const mockRecentNews: NewsArticle[] = [
     date: "2024-07-26",
     author: "Projektleitung",
     category: "Projekte",
-    link: "#"
   },
   {
     id: "4",
@@ -41,32 +39,7 @@ export const mockRecentNews: NewsArticle[] = [
     date: "2024-07-25",
     author: "Personalabteilung",
     category: "Team",
-    link: "#"
   },
 ];
 
 export const allNewsArticles: NewsArticle[] = [mockFeaturedNews, ...mockRecentNews];
-
-export const mockSchedules: ScheduleFile[] = [
-  {
-    id: "sched1",
-    name: "Wocheneinteilung KW 30.pdf",
-    dateAdded: "2024-07-22",
-    size: "1.2 MB",
-    url: "/api/mock-pdf-download/kw30.pdf",
-  },
-  {
-    id: "sched2",
-    name: "Wocheneinteilung KW 29.pdf",
-    dateAdded: "2024-07-15",
-    size: "1.1 MB",
-    url: "/api/mock-pdf-download/kw29.pdf",
-  },
-  {
-    id: "sched3",
-    name: "Wocheneinteilung KW 28.pdf",
-    dateAdded: "2024-07-08",
-    size: "1.3 MB",
-    url: "/api/mock-pdf-download/kw28.pdf",
-  },
-];

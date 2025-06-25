@@ -33,11 +33,12 @@ export interface Appointment {
 
 
 export interface ScheduleFile {
-  id:string;
+  id: string;
   name: string;
-  dateAdded: string;
-  url: string; // URL to the PDF file
-  size?: string; // Optional file size
+  dateAdded: string; // ISO string
+  url: string; // Public download URL
+  size: number; // in bytes
+  filePath: string; // path in firebase storage
 }
 
 export interface ReadReceipt {
