@@ -33,8 +33,8 @@ export const adminStorage = getStorage(adminApp);
 // Helper function to get the current user on the server side
 export async function getCurrentUser() {
   try {
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get('__session');
+    const { get } = cookies();
+    const sessionCookie = get('__session');
 
     if (!sessionCookie?.value) {
       return null;
