@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/firebase-admin';
 import AdminDashboardClient from './AdminDashboardClient';
 import { getNewsArticlesWithReadCounts, getAppointments } from '@/actions/adminActions';
-import { allNewsArticles as mockArticles } from '@/lib/mockData';
 import AppointmentManager from './AppointmentManager';
 
 export default async function AdminPage() {
@@ -28,7 +27,6 @@ export default async function AdminPage() {
       <AdminDashboardClient
         initialArticles={articles}
         initialReceipts={receipts}
-        mockArticles={mockArticles}
         adminEmail={user.email!}
       />
 

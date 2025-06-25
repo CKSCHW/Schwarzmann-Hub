@@ -14,9 +14,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
 import { BellRing, Eye, Loader2, Newspaper, UploadCloud, Globe } from 'lucide-react';
-import { seedInitialData, createArticle, importWordPressArticles } from '@/actions/adminActions';
+import { createArticle, importWordPressArticles } from '@/actions/adminActions';
 import type { NewsArticle, ReadReceiptWithUser } from '@/types';
-import { allNewsArticles } from '@/lib/mockData';
 
 const articleSchema = z.object({
   title: z.string().min(5, 'Der Titel muss mindestens 5 Zeichen lang sein.'),
@@ -31,19 +30,16 @@ type ArticleFormValues = z.infer<typeof articleSchema>;
 type AdminDashboardClientProps = {
   initialArticles: NewsArticle[];
   initialReceipts: ReadReceiptWithUser[];
-  mockArticles: NewsArticle[];
   adminEmail: string;
 };
 
 export default function AdminDashboardClient({
   initialArticles,
   initialReceipts,
-  mockArticles,
   adminEmail,
 }: AdminDashboardClientProps) {
   const [articles, setArticles] = useState<NewsArticle[]>(initialArticles);
   const [receipts, setReceipts] = useState<ReadReceiptWithUser[]>(initialReceipts);
-  const [isSeeding, setIsSeeding] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
@@ -58,28 +54,6 @@ export default function AdminDashboardClient({
       author: 'Geschäftsführung',
     },
   });
-
-  const handleSeedData = async () => {
-    setIsSeeding(true);
-    try {
-      const result = await seedInitialData(mockArticles);
-      // Simple reload to show new data. For production, you might update state directly.
-      window.location.reload();
-      toast({
-        title: 'Daten erfolgreich importiert',
-        description: `${result.count} Artikel wurden in die Datenbank geschrieben.`,
-      });
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: 'Fehler beim Import',
-        description: 'Die Beispieldaten konnten nicht importiert werden.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
 
   const handleImportWordPress = async () => {
     setIsImporting(true);
@@ -243,26 +217,6 @@ export default function AdminDashboardClient({
           </Card>
         </div>
         <div className="space-y-6">
-          <Card className="bg-secondary/50">
-            <CardHeader>
-              <CardTitle>Datenbank</CardTitle>
-              <CardDescription>
-                Wenn die Artikelliste leer ist, können Sie hier die Beispieldaten importieren.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={handleSeedData} disabled={isSeeding || articles.length > 0}>
-                {isSeeding ? (
-                  <Loader2 className="animate-spin mr-2" />
-                ) : (
-                  <UploadCloud className="mr-2" />
-                )}
-                Beispieldaten importieren
-              </Button>
-               {articles.length > 0 && <p className="text-xs text-muted-foreground mt-2">Daten bereits vorhanden.</p>}
-               <p className="text-xs text-muted-foreground mt-4">Dies schreibt die Artikel aus den ursprünglichen Mock-Daten in Ihre Firestore-Datenbank.</p>
-            </CardContent>
-          </Card>
           <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -356,7 +310,7 @@ export default function AdminDashboardClient({
             }) : (
                 <div className="text-center text-muted-foreground py-8">
                     <p>Keine Artikel in der Datenbank gefunden.</p>
-                    <p className="text-sm mt-2">Bitte importieren Sie die Beispieldaten.</p>
+                    <p className="text-sm mt-2">Bitte importieren Sie die Artikel im Admin-Bereich.</p>
                 </div>
             )}
           </Accordion>

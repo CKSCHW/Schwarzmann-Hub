@@ -189,7 +189,7 @@ export async function createArticle(articleData: Omit<NewsArticle, 'id' | 'date'
   const newArticle = {
       ...articleData,
       date: new Date().toISOString(),
-      source: 'internal',
+      source: 'internal', // Explicitly set source for internal articles
   };
 
   const docRef = await articlesCollection.add(newArticle);
