@@ -53,6 +53,8 @@ export interface SimpleUser {
     email?: string;
     displayName?: string;
     photoURL?: string;
+    isAdmin?: boolean;
+    groups?: UserGroup[];
 }
 
 export interface ReadReceiptWithUser extends ReadReceipt {

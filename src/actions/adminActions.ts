@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser } from '@/types';
+import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser, UserGroup } from '@/types';
 import https from 'https';
 
 // WARNING: This is a workaround for local development environments with SSL certificate issues.
@@ -268,4 +268,36 @@ export async function deleteAppointment(id: string): Promise<void> {
     await adminDb.collection('appointments').doc(id).delete();
     revalidatePath('/admin');
     revalidatePath('/dashboard');
+}
+
+
+// USER & GROUP MANAGEMENT
+export async function getUsersWithGroups(): Promise<SimpleUser[]> {
+  const listUsersResult = await adminAuth.listUsers();
+  const users: SimpleUser[] = listUsersResult.users.map(userRecord => {
+    const customClaims = (userRecord.customClaims || {}) as { role?: string; groups?: UserGroup[] };
+    return {
+      uid: userRecord.uid,
+      email: userRecord.email,
+      displayName: userRecord.displayName,
+      photoURL: userRecord.photoURL,
+      isAdmin: customClaims.role === 'admin',
+      groups: customClaims.groups || [],
+    };
+  });
+  return users;
+}
+
+export async function updateUserGroups(uid: string, groups: UserGroup[]): Promise<void> {
+    const user = await adminAuth.getUser(uid);
+    const existingClaims = user.customClaims || {};
+
+    // Preserve existing claims like 'role'
+    const newClaims = {
+        ...existingClaims,
+        groups: groups,
+    };
+
+    await adminAuth.setCustomUserClaims(uid, newClaims);
+    revalidatePath('/admin');
 }
