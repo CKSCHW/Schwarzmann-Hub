@@ -6,22 +6,26 @@ This is a NextJS starter in Firebase Studio.
 
 This application uses Firebase for server-side features and requires a **Service Account Key** to run correctly. You must configure this key before starting the development server.
 
-1.  **Find the `.env.local` file:** This file is in the root directory of your project.
+### Where to Get Your Firebase Service Account Key
 
-2.  **Get your Firebase Key:**
-    *   Go to your Firebase project console.
-    *   Navigate to **Project Settings** > **Service Accounts**.
-    *   Click the **"Generate new private key"** button to download a JSON file.
+1.  Open your web browser and go to the **Firebase Console**: [https://console.firebase.google.com/](https://console.firebase.google.com/)
+2.  Select your project, which is named **`work-news-hub`**.
+3.  In the top-left corner, click the **gear icon** ⚙️ next to "Project Overview".
+4.  From the menu, select **Project settings**.
+5.  In the Project settings page, click on the **Service accounts** tab.
+6.  Click the blue **"Generate new private key"** button. A warning will appear; click **"Generate key"** to confirm.
+7.  A JSON file (e.g., `work-news-hub-firebase-adminsdk-....json`) will be downloaded to your computer. **This file contains your key.**
 
-3.  **Set the Environment Variable:**
-    *   Open the downloaded JSON file and copy its **entire content**.
-    *   Open the `.env.local` file in your editor.
-    *   Paste the JSON content as the value for `FIREBASE_SERVICE_ACCOUNT_KEY`. It should look like this:
-        ```
-        FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "...", ...}'
-        ```
+### How to Set the Environment Variable
 
-4.  **Restart Your Server:** If the server is running, you must stop it and restart it for the changes to take effect.
+1.  **Find the `.env.local` file:** This file should be in the root directory of your project. If it doesn't exist, create it.
+2.  **Open the downloaded JSON file** and copy its **entire content**.
+3.  **Open the `.env.local` file** in your editor.
+4.  Paste the JSON content as the value for `FIREBASE_SERVICE_ACCOUNT_KEY`. The line must look exactly like this, with your key inside the single quotes:
+    ```
+    FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "...", ...}'
+    ```
+5.  **Restart Your Server:** If the server is running, you must stop it (`Ctrl+C`) and restart it (`npm run dev`) for the changes to take effect.
 
 If you don't do this, the app will show a `CRITICAL CONFIGURATION ERROR` and will not start. **This is a security feature, not a code bug.**
 

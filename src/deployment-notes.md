@@ -70,7 +70,7 @@ This will download all your project files into a new folder named `my-app` insid
 
 ### 3. Install Dependencies and Build
 
-Inside your project directory (`/var/www/my-app`), install the required packages and build the app for production.
+Inside your project directory (`/var/w_ww/my-app`), install the required packages and build the app for production.
 
 ```bash
 # Install project dependencies
@@ -86,25 +86,33 @@ npm run build
 
 If this step is not done *perfectly*, you will see the `CRITICAL CONFIGURATION ERROR`. The application is designed to stop if the key is wrong.
 
-Your application needs the Firebase credentials to run.
+#### A. Find Your Service Account Key in Firebase
 
-**A. Create the `.env.local` file:**
+1.  Open your web browser and go to the **Firebase Console**: [https://console.firebase.google.com/](https://console.firebase.google.com/)
+2.  Select your project, which is named **`work-news-hub`**.
+3.  In the top-left corner, click the **gear icon** ⚙️ next to "Project Overview".
+4.  From the menu, select **Project settings**.
+5.  In the Project settings page, click on the **Service accounts** tab.
+6.  Click the blue **"Generate new private key"** button. A warning will appear; click **"Generate key"** to confirm.
+7.  A JSON file (e.g., `work-news-hub-firebase-adminsdk-....json`) will be downloaded to your computer. **This file contains your key.**
 
-In your project directory (`/var/www/my-app`), create the environment file using the `nano` text editor:
+#### B. Create the `.env.local` file on your server
+
+In your project directory on the server (`/var/www/my-app`), create the environment file using the `nano` text editor:
 
 ```bash
 # Make sure you are in your project folder: /var/www/my-app
 nano .env.local
 ```
 
-**B. Paste the Key:**
+#### C. Paste the Key
 
 Now, you must paste your **entire** Firebase Service Account Key into this file.
 
-1.  On your local computer, open the `.json` key file you downloaded from Firebase in a simple text editor (like Notepad or TextEdit).
+1.  On your **local computer**, open the `.json` key file you just downloaded from Firebase in a simple text editor (like Notepad, VS Code, or TextEdit).
 2.  Select **ALL** the text in that file (`Ctrl+A` or `Cmd+A`). Make sure your selection starts with `{` and ends with `}`.
 3.  Copy the selected text (`Ctrl+C` or `Cmd+C`).
-4.  Go back to your server's terminal where `nano` is open.
+4.  Go back to your **server's terminal** where `nano` is open.
 5.  Type `FIREBASE_SERVICE_ACCOUNT_KEY=`
 6.  Type a single quote `'`.
 7.  Now, paste the key you copied. In most terminal programs, you can right-click to paste. **Do not use `Ctrl+V`**.
@@ -116,7 +124,7 @@ The final result must be **a single, unbroken line** that looks EXACTLY like thi
 FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "your-project-id", "private_key_id": "...", "private_key": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n", "client_email": "...", "client_id": "...", "auth_uri": "...", "token_uri": "...", "auth_provider_x509_cert_url": "...", "client_x509_cert_url": "..."}'
 ```
 
-**C. Save and Exit:**
+#### D. Save and Exit `nano`
 
 - Press `Ctrl+X` to exit `nano`.
 - Press `Y` to confirm you want to save the changes.
@@ -126,7 +134,7 @@ FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "your-pr
 
 #### ❗ **TROUBLESHOOTING THIS STEP** ❗
 
-If you restart the app and still see the `CRITICAL CONFIGURATION ERROR`, it is 100% certain that one of these things is wrong:
+If you start the app and still see the `CRITICAL CONFIGURATION ERROR`, it is 100% certain that one of these things is wrong:
 
 *   **Incomplete Copy:** You did not copy the *entire* JSON object. It must start with `{` and end with `}`.
 *   **Extra Characters:** You accidentally added extra characters or line breaks when pasting. The `FIREBASE_SERVICE_ACCOUNT_KEY=` part must be followed immediately by a single quote `'`, then the JSON, then another single quote `'`. There should be no characters or spaces before or after this single line.
