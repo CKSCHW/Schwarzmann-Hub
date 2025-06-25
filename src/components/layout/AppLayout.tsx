@@ -15,6 +15,7 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Home, CalendarDays, LayoutDashboard, Zap, Bell, LogOut, ShieldCheck, Newspaper } from "lucide-react";
@@ -42,9 +43,12 @@ const AppHeader = () => {
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur md:px-6">
       <div className="flex w-full items-center justify-between">
-         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Image src="https://www.elektro-schwarzmann.at/images/logo_ci.png" alt="Elektro Schwarzmann Logo" width={180} height={41} unoptimized />
-        </Link>
+        <div className="flex items-center gap-2">
+            <SidebarTrigger className="md:hidden" />
+            <Link href="/" className="flex items-center gap-2 font-semibold">
+                <Image src="https://www.elektro-schwarzmann.at/images/logo_ci.png" alt="Elektro Schwarzmann Logo" width={180} height={41} unoptimized />
+            </Link>
+        </div>
         <div className="flex items-center gap-4">
           <NotificationBell />
           <UserMenu />
