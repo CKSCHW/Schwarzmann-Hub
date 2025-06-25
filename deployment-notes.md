@@ -19,18 +19,27 @@ npm install pm2 -g
 
 ### 2. Get Your Application Code
 
-Clone your project from your Git repository onto the server. A common location is `/var/www`.
+Your application code is stored in a Git repository (like GitHub, GitLab, or Bitbucket). To get the code onto your server, you need to "clone" the repository.
+
+**A. Find Your Repository URL:**
+
+Go to your repository's main page on the web (e.g., GitHub). Look for a green "Code" button. Click it, and copy the HTTPS URL provided. It will look something like `https://github.com/your-username/your-project.git`.
+
+**B. Clone the Repository on Your Server:**
+
+A common location to store web applications is `/var/www`. These commands will create that directory and clone your project into it.
 
 ```bash
-# Create the directory and set permissions
+# Create the directory and set permissions for your user
 sudo mkdir -p /var/www
 sudo chown $USER:$USER /var/www
 cd /var/www
 
-# Clone your repository (replace with your actual URL)
+# Clone your repository (REPLACE THE URL with the one you copied)
 git clone https://your-repository-url.com/project.git my-app
 cd my-app
 ```
+This will download all your project files into a new folder named `my-app`.
 
 ### 3. Install Dependencies and Build
 
@@ -46,7 +55,9 @@ npm run build
 
 ### 4. Set Up Environment Variables
 
-Your app needs the Firebase credentials to run. Create a `.env.local` file in your project directory.
+**This is a critical step.** Your app needs the Firebase credentials to run server-side functions. If this step is not done correctly, your app will fail to start and show a `CRITICAL CONFIGURATION ERROR`.
+
+Create a `.env.local` file in your project directory.
 
 ```bash
 # Create and open the file with nano text editor
