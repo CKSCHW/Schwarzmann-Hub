@@ -197,3 +197,30 @@ sudo systemctl restart nginx
 ```
 
 Your application should now be live! You can manage it using commands like `pm2 list`, `pm2 stop my-app`, and `pm2 logs my-app`.
+
+### 7. Creating Users and Admins
+
+Your application uses Firebase Authentication. Users are not created in the code but in the Firebase console.
+
+#### A. Create a Standard User Account
+
+1.  Go to the **Firebase Console**: [https://console.firebase.google.com/](https://console.firebase.google.com/)
+2.  Select your project (`work-news-hub`).
+3.  In the left menu, go to **Build > Authentication**.
+4.  Click the **Users** tab, then click the blue **"Add user"** button.
+5.  Enter an email and a password (must be at least 6 characters).
+6.  Click **"Add user"**.
+
+This user can now log into your application but will not have admin access.
+
+#### B. Promote a User to an Admin
+
+To grant a user admin privileges, you need to set a "custom claim" on their account. This is a secure way to assign roles. I've added a helper script to make this easy.
+
+1.  **Ensure you are in your project directory** on your server (`/var/www/my-app`).
+2.  **Make sure your `.env.local` file is present and correct.** This script needs it to connect to your Firebase project.
+3.  **Run the following command**, replacing `user-email@example.com` with the email of the user you just created:
+    ```bash
+    npm run set-admin -- user-email@example.com
+    ```
+4.  You should see a success message. The next time this user logs in, they will have access to the Admin Dashboard.
