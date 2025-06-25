@@ -14,6 +14,26 @@ export interface NewsArticle {
   sourceId?: string; // original post ID from source
 }
 
+export const userGroups = [
+  "Verwaltung",
+  "Techniker",
+  "Montage",
+  "Lehrlinge",
+  "Geschäftsleitung",
+  "C Level",
+] as const;
+
+export type UserGroup = (typeof userGroups)[number];
+
+export interface Appointment {
+  id: string;
+  title: string;
+  date: string; // Stored as ISO string
+  description?: string;
+  groups: UserGroup[];
+}
+
+
 export interface ScheduleFile {
   id:string;
   name: string;

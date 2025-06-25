@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import type { NewsArticle, ReadReceipt, ReadReceiptWithUser } from '@/types';
+import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment } from '@/types';
 
 // Helper function to strip HTML tags
 function stripHtml(html: string): string {
@@ -182,36 +182,6 @@ export async function importWordPressArticles() {
   return { newCount: totalNewArticles, updatedCount: totalUpdatedArticles };
 }
 
-// Action to seed initial data from mockData into Firestore
-export async function seedInitialData(articles: NewsArticle[]) {
-  const articlesCollection = adminDb.collection('articles');
-
-  const batch = adminDb.batch();
-  let count = 0;
-
-  for (const article of articles) {
-    // Use a specific ID to avoid duplicates on re-seeding
-    const docRef = articlesCollection.doc(`mock-${article.id}`);
-    const doc = await docRef.get();
-    
-    // Only seed if it doesn't already exist
-    if (!doc.exists) {
-        batch.set(docRef, {
-            ...article,
-            date: new Date(article.date).toISOString(),
-            source: 'internal',
-        });
-        count++;
-    }
-  }
-
-  await batch.commit();
-
-  revalidatePath('/');
-  revalidatePath('/admin');
-  return { count };
-}
-
 // Action to create a new article
 export async function createArticle(articleData: Omit<NewsArticle, 'id' | 'date'>): Promise<NewsArticle> {
   const articlesCollection = adminDb.collection('articles');
@@ -258,4 +228,27 @@ export async function getNewsArticlesWithReadCounts() {
     }));
 
     return { articles, receipts: receiptsWithUsers };
+}
+
+// APPOINTMENT ACTIONS
+
+// Action to get all appointments for the admin dashboard
+export async function getAppointments(): Promise<Appointment[]> {
+    const snapshot = await adminDb.collection('appointments').orderBy('date', 'desc').get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
+}
+
+// Action to create a new appointment
+export async function createAppointment(appointmentData: Omit<Appointment, 'id'>): Promise<Appointment> {
+    const docRef = await adminDb.collection('appointments').add(appointmentData);
+    revalidatePath('/admin');
+    revalidatePath('/dashboard');
+    return { id: docRef.id, ...appointmentData };
+}
+
+// Action to delete an appointment
+export async function deleteAppointment(id: string): Promise<void> {
+    await adminDb.collection('appointments').doc(id).delete();
+    revalidatePath('/admin');
+    revalidatePath('/dashboard');
 }

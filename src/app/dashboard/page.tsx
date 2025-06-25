@@ -1,8 +1,10 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowRight, Newspaper, CalendarCheck2, Users, Settings } from "lucide-react";
 import Image from "next/image";
+import { getAppointmentsForUser } from "@/actions/dashboardActions";
 
 const quickAccessItems = [
   {
@@ -37,7 +39,9 @@ const quickAccessItems = [
   }
 ];
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const appointments = await getAppointmentsForUser();
+
   return (
     <div className="space-y-8">
       <section aria-labelledby="dashboard-welcome-title">
@@ -84,29 +88,31 @@ export default function DashboardPage() {
       <section aria-labelledby="upcoming-events-title">
          <Card>
             <CardHeader>
-                <CardTitle className="text-xl font-headline">Anstehende Termine</CardTitle>
-                <CardDescription>Bleiben Sie über wichtige Termine informiert.</CardDescription>
+                <CardTitle className="text-xl font-headline">Ihre anstehenden Termine</CardTitle>
+                <CardDescription>Für Sie und Ihre Gruppen relevante Termine.</CardDescription>
             </CardHeader>
             <CardContent>
-                <ul className="space-y-3">
-                    <li className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                        <div>
-                            <p className="font-medium">Betriebsversammlung</p>
-                            <p className="text-sm text-muted-foreground">15. August 2024 - 10:00 Uhr</p>
-                        </div>
-                        <Button variant="outline" size="sm" disabled>Details</Button>
-                    </li>
-                    <li className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                        <div>
-                            <p className="font-medium">Frist für Projekt Alpha</p>
-                            <p className="text-sm text-muted-foreground">20. August 2024</p>
-                        </div>
-                         <Button variant="outline" size="sm" disabled>Projekt ansehen</Button>
-                    </li>
-                </ul>
-                <p className="text-center text-muted-foreground mt-4">
-                    Weitere Termindetails werden in Kürze verfügbar sein.
-                </p>
+                {appointments.length > 0 ? (
+                  <ul className="space-y-3">
+                      {appointments.map(appointment => (
+                          <li key={appointment.id} className="flex items-start justify-between p-3 bg-secondary/50 rounded-md">
+                              <div>
+                                  <p className="font-medium">{appointment.title}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                      {new Date(appointment.date).toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                  </p>
+                                  {appointment.description && (
+                                    <p className="text-sm text-muted-foreground mt-1">{appointment.description}</p>
+                                  )}
+                              </div>
+                          </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="text-center text-muted-foreground py-4">
+                      Für Sie sind aktuell keine Termine eingetragen.
+                  </p>
+                )}
             </CardContent>
          </Card>
       </section>
