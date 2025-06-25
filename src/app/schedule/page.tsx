@@ -1,11 +1,11 @@
 
+import { noStore } from 'next/cache';
 import { getCurrentUser } from '@/lib/firebase-admin';
 import { getSchedules } from '@/actions/scheduleActions';
 import ScheduleClient from './ScheduleClient';
 
-export const dynamic = 'force-dynamic';
-
 export default async function SchedulePage() {
+  noStore();
   const user = await getCurrentUser();
   const schedules = await getSchedules();
   

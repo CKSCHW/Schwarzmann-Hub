@@ -6,10 +6,10 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { CalendarDays, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-
-export const dynamic = 'force-dynamic';
+import { noStore } from 'next/cache';
 
 export default async function NewsDetailPage({ params }: { params: { id: string } }) {
+  noStore();
   const article = await getArticle(params.id);
   const user = await getCurrentUser();
 

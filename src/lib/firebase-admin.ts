@@ -4,7 +4,6 @@ import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { cookies } from 'next/headers';
-import { noStore } from 'next/cache';
 import type { SimpleUser } from '@/types';
 
 const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
@@ -34,7 +33,6 @@ export const adminStorage = getStorage(adminApp);
 
 // Helper function to get the current user on the server side
 export async function getCurrentUser(): Promise<SimpleUser | null> {
-  noStore();
   const cookieStore = cookies();
   const sessionCookie = cookieStore.get('__session');
 

@@ -4,8 +4,10 @@
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import { getCurrentUser } from '@/lib/firebase-admin';
 import type { Appointment, UserGroup } from '@/types';
+import { noStore } from 'next/cache';
 
 export async function getAppointmentsForUser(): Promise<Appointment[]> {
+  noStore();
   const sessionUser = await getCurrentUser(); // Get user from session cookie to confirm they are logged in
   if (!sessionUser) {
     return [];

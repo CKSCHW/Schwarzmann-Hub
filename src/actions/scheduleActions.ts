@@ -2,12 +2,14 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { noStore } from 'next/cache';
 import { adminDb, adminStorage, getCurrentUser } from '@/lib/firebase-admin';
 import type { ScheduleFile } from '@/types';
 
 async function verifyAdmin() {
+    noStore();
     const user = await getCurrentUser();
-    if (!user || user.customClaims?.role !== 'admin') {
+    if (!user || user.isAdmin !== true) {
         throw new Error('Unauthorized');
     }
     return user;
@@ -60,6 +62,7 @@ export async function uploadSchedule(formData: FormData): Promise<{ success: boo
         });
 
         revalidatePath('/schedule');
+        revalidatePath('/api/schedules');
         return { success: true, message: 'Plan erfolgreich hochgeladen.' };
 
     } catch (error: any) {
@@ -74,13 +77,22 @@ export async function deleteSchedule(scheduleId: string, filePath: string): Prom
 
         const bucket = adminStorage.bucket();
         
+        // Find the document to delete to get the filePath
+        const scheduleDoc = await adminDb.collection('schedules').where('id', '==', scheduleId).limit(1).get();
+        if (scheduleDoc.empty) {
+            return { success: false, message: 'Dokument nicht gefunden.'};
+        }
+        const docToDelete = scheduleDoc.docs[0];
+        const docData = docToDelete.data() as ScheduleFile;
+        
         // Delete from Firestore
-        await adminDb.collection('schedules').doc(scheduleId).delete();
+        await docToDelete.ref.delete();
         
         // Delete from Storage
-        await bucket.file(filePath).delete();
+        await bucket.file(docData.filePath).delete();
         
         revalidatePath('/schedule');
+        revalidatePath('/api/schedules');
         return { success: true, message: 'Plan erfolgreich gelöscht.' };
 
     } catch (error: any) {
