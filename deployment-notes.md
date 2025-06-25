@@ -58,18 +58,19 @@ Now you can use the SSH URL to clone your project.
     ```bash
     # Create the directory for your apps if it doesn't exist
     sudo mkdir -p /var/www
+    # Take ownership of the directory so you don't need sudo for git
     sudo chown $USER:$USER /var/www
     cd /var/www
 
-    # Clone your repository using the SSH URL
+    # Clone your repository using the SSH URL (NO SUDO NEEDED)
     git clone git@github.com:CKSCHW/Schwarzmann-Hub.git my-app
     cd my-app
     ```
-This will download all your project files into a new folder named `my-app`.
+This will download all your project files into a new folder named `my-app` inside `/var/www`. Running `git clone` without `sudo` ensures that Git uses the SSH key located in your user's home directory.
 
 ### 3. Install Dependencies and Build
 
-Inside your project directory (`/var/w_ww/my-app`), install the required packages and build the app for production.
+Inside your project directory (`/var/www/my-app`), install the required packages and build the app for production.
 
 ```bash
 # Install project dependencies
