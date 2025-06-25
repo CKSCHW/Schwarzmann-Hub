@@ -41,13 +41,20 @@ export default function LoginPage() {
   useEffect(() => {
     // This effect sets up the reCAPTCHA verifier once the component mounts.
     // It's invisible to the user.
+    // In React 18's Strict Mode, this effect will run twice in development.
+    // The cleanup function is essential to prevent issues.
+    let verifier: RecaptchaVerifier;
     try {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      verifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
-        'callback': (response: any) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-        }
       });
+      window.recaptchaVerifier = verifier;
+
+      // Cleanup function to clear the verifier when the component unmounts.
+      // This is crucial for React 18 Strict Mode and for preventing memory leaks.
+      return () => {
+        verifier.clear();
+      };
     } catch (error) {
       console.error("Error setting up reCAPTCHA", error);
       toast({
@@ -86,20 +93,35 @@ export default function LoginPage() {
         return;
       }
       setIsLoading(true);
+      
+      // Sanitize the phone number to E.164 format for Firebase
+      const formattedPhoneNumber = phoneNumber.replace(/\s/g, '');
+
       try {
         const appVerifier = window.recaptchaVerifier;
-        const confirmation = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+        const confirmation = await signInWithPhoneNumber(auth, formattedPhoneNumber, appVerifier);
         setConfirmationResult(confirmation);
         setIsCodeSent(true);
         toast({
           title: "Code gesendet",
           description: `Ein Bestätigungscode wurde an ${phoneNumber} gesendet.`,
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("SMS send error:", error);
+
+        // Provide more specific feedback based on the error code
+        let description = 'Der Code konnte nicht gesendet werden. Bitte prüfen Sie die Nummer und versuchen Sie es erneut.';
+        if (error.code === 'auth/invalid-phone-number') {
+            description = 'Die angegebene Telefonnummer ist ungültig. Bitte verwenden Sie das internationale Format (z.B. +43...).';
+        } else if (error.code === 'auth/too-many-requests') {
+            description = 'Zu viele Anfragen gesendet. Bitte versuchen Sie es später erneut.';
+        } else if (error.code === 'auth/captcha-check-failed' || error.code === 'auth/web-storage-unsupported') {
+            description = 'Die Sicherheitsüberprüfung ist fehlgeschlagen. Bitte laden Sie die Seite neu und versuchen Sie es erneut.';
+        }
+
         toast({
           title: 'Fehler beim Senden des Codes',
-          description: 'Der Code konnte nicht gesendet werden. Bitte prüfen Sie die Nummer und versuchen Sie es erneut.',
+          description: description,
           variant: 'destructive',
         });
         setIsCodeSent(false);
