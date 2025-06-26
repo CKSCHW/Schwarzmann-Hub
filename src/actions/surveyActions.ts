@@ -49,8 +49,41 @@ export async function createSurvey(surveyData: Omit<Survey, 'id' | 'createdAt' |
     }
     
     revalidatePath('/admin');
+    revalidatePath('/surveys');
     return newSurvey;
 }
+
+export async function updateSurvey(surveyId: string, surveyData: Omit<Survey, 'id' | 'createdAt' | 'createdBy' | 'creatorEmail' | 'completionCount'>): Promise<Survey> {
+    const user = await verifySurveyManager();
+    const surveyRef = adminDb.collection('surveys').doc(surveyId);
+    const surveyDoc = await surveyRef.get();
+
+    if (!surveyDoc.exists) {
+        throw new Error("Umfrage nicht gefunden.");
+    }
+
+    const existingSurvey = surveyDoc.data() as Survey;
+    if (existingSurvey.createdBy !== user.uid && !user.isAdmin) {
+        throw new Error("Sie sind nicht berechtigt, diese Umfrage zu bearbeiten.");
+    }
+    
+    // Some fields should not be overwritten by an update
+    const dataToUpdate = {
+        title: surveyData.title,
+        description: surveyData.description,
+        questions: surveyData.questions.map(q => ({ ...q, id: q.id || randomUUID() })),
+        assignedUserIds: surveyData.assignedUserIds,
+    };
+
+    await surveyRef.update(dataToUpdate);
+
+    revalidatePath('/admin');
+    revalidatePath(`/admin/surveys/edit/${surveyId}`);
+    revalidatePath(`/surveys`);
+
+    return { ...existingSurvey, ...dataToUpdate, id: surveyId };
+}
+
 
 export async function deleteSurvey(surveyId: string): Promise<void> {
     const user = await verifySurveyManager();
@@ -129,6 +162,24 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
 
     return survey;
 }
+
+export async function getSurveyForEditing(surveyId: string): Promise<Survey | null> {
+    const user = await verifySurveyManager();
+    const surveyDoc = await adminDb.collection('surveys').doc(surveyId).get();
+
+    if (!surveyDoc.exists) {
+        return null;
+    }
+    
+    const survey = { id: surveyDoc.id, ...surveyDoc.data() } as Survey;
+    // Security check: only creator or admin can edit
+    if (survey.createdBy !== user.uid && !user.isAdmin) {
+        throw new Error("Sie sind nicht berechtigt, diese Umfrage zu bearbeiten.");
+    }
+    
+    return survey;
+}
+
 
 export async function submitSurveyResponse(
   surveyId: string,
