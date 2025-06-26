@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser, UserGroup } from '@/types';
 import https from 'https';
+import { sendAndSavePushNotification } from './notificationActions';
 
 // WARNING: This is a workaround for local development environments with SSL certificate issues.
 // Do NOT use this in a production environment as it bypasses SSL certificate validation,
@@ -116,6 +117,7 @@ export async function importWordPressArticles() {
   const batch = adminDb.batch();
   let totalNewArticles = 0;
   let totalUpdatedArticles = 0;
+  const newArticleTitles: string[] = [];
 
   for (const source of wpSources) {
       let wpArticles;
@@ -154,9 +156,10 @@ export async function importWordPressArticles() {
           const processedContent = await processShortcodes(article.content.rendered);
           const processedSnippet = await processShortcodes(article.excerpt.rendered);
           const authorName = article._embedded?.author?.[0]?.name;
+          const articleTitle = stripHtml(article.title.rendered);
 
           const articlePayload: Omit<NewsArticle, 'id'> = {
-              title: stripHtml(article.title.rendered),
+              title: articleTitle,
               snippet: processedSnippet,
               content: processedContent,
               imageUrl: imageUrl,
@@ -176,6 +179,7 @@ export async function importWordPressArticles() {
               const docRef = articlesCollection.doc();
               batch.set(docRef, articlePayload);
               totalNewArticles++;
+              newArticleTitles.push(articleTitle);
           }
       }
   }
@@ -184,6 +188,16 @@ export async function importWordPressArticles() {
       await batch.commit();
   }
   
+  if(newArticleTitles.length > 0) {
+    const notificationTitle = newArticleTitles.length > 1 ? `${newArticleTitles.length} neue Artikel verfügbar` : `Neuer Artikel: ${newArticleTitles[0]}`;
+    const notificationBody = newArticleTitles.length > 1 ? `Neuigkeiten von den Webseiten.` : 'Jetzt in der App lesen.';
+    await sendAndSavePushNotification({
+        title: notificationTitle,
+        body: notificationBody,
+        url: '/news'
+    });
+  }
+
   revalidatePath('/');
   revalidatePath('/admin');
   revalidatePath('/news');
@@ -195,21 +209,26 @@ export async function importWordPressArticles() {
 export async function createArticle(articleData: Omit<NewsArticle, 'id' | 'date'>): Promise<NewsArticle> {
   const articlesCollection = adminDb.collection('articles');
   
-  const newArticle = {
+  const newArticleData = {
       ...articleData,
       date: new Date().toISOString(),
       source: 'internal', // Explicitly set source for internal articles
   };
 
-  const docRef = await articlesCollection.add(newArticle);
+  const docRef = await articlesCollection.add(newArticleData);
+  const newArticle = { ...newArticleData, id: docRef.id };
+
+  // Send push notification
+  await sendAndSavePushNotification({
+      title: 'Neue interne Meldung',
+      body: newArticle.title,
+      url: `/news/${newArticle.id}`,
+  });
 
   revalidatePath('/');
   revalidatePath('/admin');
   
-  return {
-      ...newArticle,
-      id: docRef.id,
-  };
+  return newArticle;
 }
 
 // Action to get articles with their read counts for the admin dashboard

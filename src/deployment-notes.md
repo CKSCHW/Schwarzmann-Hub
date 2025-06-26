@@ -85,9 +85,11 @@ npm run build
 
 **THIS IS THE MOST IMPORTANT AND MOST COMMON POINT OF FAILURE. PLEASE READ VERY CAREFULLY.**
 
-If this step is not done *perfectly*, you will see the `CRITICAL CONFIGURATION ERROR`. The application is designed to stop if the key is wrong.
+If this step is not done *perfectly*, you will see errors.
 
-#### A. Find Your Service Account Key in Firebase
+#### 4.1 Firebase Service Account Key
+
+If this step is not done *perfectly*, you will see the `CRITICAL CONFIGURATION ERROR`. The application is designed to stop if the key is wrong.
 
 1.  Open your web browser and go to the **Firebase Console**: [https://console.firebase.google.com/](https://console.firebase.google.com/)
 2.  Select your project, which is named **`work-news-hub`**.
@@ -97,60 +99,64 @@ If this step is not done *perfectly*, you will see the `CRITICAL CONFIGURATION E
 6.  Click the blue **"Generate new private key"** button. A warning will appear; click **"Generate key"** to confirm.
 7.  A JSON file (e.g., `work-news-hub-firebase-adminsdk-....json`) will be downloaded to your computer. **This file contains your key.**
 
-#### B. Create the `.env.local` file on your server
+#### 4.2 VAPID Keys for Push Notifications (NEW & REQUIRED!)
 
-In your project directory on the server (`/var/www/my-app`), create the environment file using the `nano` text editor:
+Push notifications require a set of secure keys called VAPID keys.
+
+1.  **Generate Keys:** In your project directory on the server (`/var/www/my-app`), run this new command:
+    ```bash
+    npm run generate-vapid-keys
+    ```
+2.  **Copy the Output:** It will produce a Public Key and a Private Key. Copy both of them.
+
+#### 4.3 Create and Edit the `.env.local` file
+
+In your project directory on the server (`/var/www/my-app`), create or open the environment file using the `nano` text editor:
 
 ```bash
 # Make sure you are in your project folder: /var/www/my-app
 nano .env.local
 ```
 
-#### C. Paste the Key
+Now, add your Firebase Key and your VAPID keys to this file. The file should contain these three lines, each on its own line:
 
-Now, you must paste your **entire** Firebase Service Account Key into this file. **This step must be done perfectly.**
+```
+# 1. Firebase Service Account Key (paste the full JSON content inside single quotes)
+FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "...", ...}'
 
-1.  On your **local computer**, open the `.json` key file you just downloaded from Firebase in a simple text editor (like Notepad, VS Code, or TextEdit).
-2.  Select **ALL** the text in that file (`Ctrl+A` or `Cmd+A`). Make sure your selection starts with `{` and ends with `}`.
-3.  Copy the selected text (`Ctrl+C` or `Cmd+C`).
+# 2. VAPID Public Key
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=PASTE_YOUR_PUBLIC_KEY_HERE
+
+# 3. VAPID Private Key
+VAPID_PRIVATE_KEY=PASTE_YOUR_PRIVATE_KEY_HERE
+```
+
+**Instructions for Pasting the Firebase Key:**
+
+1.  On your **local computer**, open the `.json` key file you downloaded from Firebase.
+2.  Select **ALL** the text (`Ctrl+A` or `Cmd+A`).
+3.  Copy the text (`Ctrl+C` or `Cmd+C`).
 4.  Go back to your **server's terminal** where `nano` is open.
-5.  Type `FIREBASE_SERVICE_ACCOUNT_KEY=`
-6.  Type a single quote: `'`
-7.  **Paste the key**. In most terminals (like PuTTY or Windows Terminal), you can simply **right-click** to paste the text. **Do NOT use `Ctrl+V`**, as that may not work or may add strange characters.
-8.  After the pasted content (which must end with `}`), type another single quote: `'`
+5.  On the `FIREBASE_SERVICE_ACCOUNT_KEY` line, after the equals sign `=`, type a single quote `'`, then right-click to paste the key, and finally type another single quote `'` at the end. The key must be on a single, unbroken line.
 
-The final result must be **a single, unbroken line** that looks EXACTLY like this (but with your own project details):
-
-```
-FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "your-project-id", "private_key_id": "...", "private_key": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n", "client_email": "...", "client_id": "...", "auth_uri": "...", "token_uri": "...", "auth_provider_x509_cert_url": "...", "client_x509_cert_url": "..."}'
-```
-
-#### D. Save and Exit `nano`
+#### 4.4 Save and Exit `nano`
 
 - Press `Ctrl+X` to exit `nano`.
-- Press `Y` to confirm you want to save the changes.
-- Press `Enter` to save the file with the correct name, `.env.local`.
-
----
-
-#### ❗ **CRITICAL STEP: TROUBLESHOOTING** ❗
-
-If you start the app and still see the `CRITICAL CONFIGURATION ERROR`, it is **100% certain** that one of these things is wrong with the `.env.local` file you created. This is the most common point of failure in any web deployment.
-
-*   **❗ Incomplete Copy:** You did not copy the **entire** JSON object. It must start with `{` and end with `}`. Even one missing character will cause this error.
-*   **❗ Extra Characters:** You accidentally added extra characters or line breaks when pasting. The entire `FIREBASE_SERVICE_ACCOUNT_KEY='...'` must be on a **single line**. There can be no spaces before `FIREBASE_SERVICE_ACCOUNT_KEY=` or after the final single quote `'`.
-*   **❗ Wrong Key:** You may have copied a different JSON file, not the service account key. The key **must** contain `"type": "service_account"` and a `"project_id"`.
-*   **❗ File Not Saved Correctly:** The file was not saved as `.env.local` in the root of your project (`/var/www/my-app`). Use `ls -a` to check for hidden files.
+- Press `Y` to confirm you want to save.
+- Press `Enter` to save the file.
 
 ---
 
 ### 5. Start the Application with PM2
 
-PM2 will run your app in the background and ensure it restarts automatically if it crashes.
+PM2 will run your app in the background and ensure it restarts automatically.
 
 ```bash
-# Start the app using the 'npm start' script from package.json
-pm2 start npm --name "my-app" -- start
+# Stop the old process if it's running, then restart it
+pm2 restart my-app
+
+# If it's the first time, use this command instead:
+# pm2 start npm --name "my-app" -- start
 ```
 
 Your app is now running, but it's only listening on `localhost:3000`. The final step is to configure Nginx to make it accessible to the public.
@@ -187,7 +193,7 @@ Save and close the file (`Ctrl+X`, `Y`, `Enter`).
 **C. Enable the new configuration and restart Nginx:**
 
 ```bash
-# Create a link from 'sites-available' to 'sites-enabled'
+# Create a link from 'sites-available' to 'sites-enabled' (if not already done)
 sudo ln -s /etc/nginx/sites-available/my-app /etc/nginx/sites-enabled/
 
 # Test the Nginx configuration for errors

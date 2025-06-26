@@ -1,65 +1,65 @@
+// This service worker file is intentionally kept simple for clarity.
+// It handles push notifications and click events.
 
-'use strict';
-
-self.addEventListener('push', function (event) {
-  let data = { title: 'Update', body: 'Something new happened!', icon: '/icon-192x192.png', url: '/' };
-  if (event.data) {
-    try {
-      data = event.data.json();
-    } catch (e) {
-      console.error('Push event data parsing error:', e);
-    }
+self.addEventListener('push', function(event) {
+  // Fallback for when no data is sent with the push message.
+  if (!event.data) {
+    console.warn('Push event but no data');
+    return;
   }
-
+  
+  const data = event.data.json();
+  
+  const title = data.title || 'Neue Benachrichtigung';
   const options = {
     body: data.body,
-    icon: data.icon || 'https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-192x192.png',
-    badge: 'https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-192x192.png',
+    icon: data.icon || '/icon-192x192.png', // A default icon
+    badge: '/badge-72x72.png', // A default badge for Android
+    // Pass along data to the click event
     data: {
       url: data.url,
       notificationId: data.notificationId,
-    },
+    }
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    self.registration.showNotification(title, options)
   );
 });
 
-self.addEventListener('notificationclick', function (event) {
-  event.notification.close(); // Close the notification
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
 
   const notificationData = event.notification.data;
-  const urlToOpen = new URL(notificationData.url || '/', self.location.origin).href;
-
-  // Append the notificationId to the URL to track the click
-  const urlWithTracking = new URL(urlToOpen);
-  if (notificationData.notificationId) {
-    urlWithTracking.searchParams.append('notification_id', notificationData.notificationId);
+  if (!notificationData || !notificationData.url) {
+    // If no URL is provided, just open the app's root page.
+    event.waitUntil(clients.openWindow('/'));
+    return;
   }
+  
+  // Construct the URL to open. We add a query parameter to track the click.
+  const urlToOpen = new URL(notificationData.url, self.location.origin);
+  urlToOpen.searchParams.set('notification_id', notificationData.notificationId);
 
-  const promiseChain = clients.matchAll({
-    type: 'window',
-    includeUncontrolled: true,
-  }).then(function (windowClients) {
-    let matchingClient = null;
-    for (let i = 0; i < windowClients.length; i++) {
-      const windowClient = windowClients[i];
-      // A more robust check for an open client
-      const clientUrl = new URL(windowClients[i].url);
-      const targetUrl = new URL(urlToOpen);
-      if (clientUrl.pathname === targetUrl.pathname) {
-          matchingClient = windowClients[i];
-          break;
+  // This code focuses an existing window or opens a new one.
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true
+    }).then(function(clientList) {
+      // If a window is already open, focus it.
+      if (clientList.length > 0) {
+        let client = clientList[0];
+        for (let i = 0; i < clientList.length; i++) {
+          if (clientList[i].focused) {
+            client = clientList[i];
+          }
+        }
+        // Navigate the existing window to the new URL and focus it.
+        return client.navigate(urlToOpen.href).then(cli => cli.focus());
       }
-    }
-
-    if (matchingClient) {
-      return matchingClient.focus().then(client => client.navigate(urlWithTracking.href));
-    } else {
-      return clients.openWindow(urlWithTracking.href);
-    }
-  });
-
-  event.waitUntil(promiseChain);
+      // Otherwise, open a new window.
+      return clients.openWindow(urlToOpen.href);
+    })
+  );
 });
