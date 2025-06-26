@@ -6,6 +6,7 @@ import { adminDb, adminAuth, getCurrentUser } from '@/lib/firebase-admin';
 import type { Survey, SurveyCompletion, SurveyResponse, SimpleUser, SurveyWithCompletion, SurveyResult } from '@/types';
 import { firestore } from 'firebase-admin';
 import { sendPushNotificationToUsers } from './notificationActions';
+import { randomUUID } from 'crypto';
 
 async function verifySurveyManager() {
     const user = await getCurrentUser();
@@ -24,6 +25,8 @@ export async function createSurvey(surveyData: Omit<Survey, 'id' | 'createdAt' |
 
     const newSurveyData: Omit<Survey, 'id'> = {
         ...surveyData,
+        // Ensure every question has a unique ID
+        questions: surveyData.questions.map(q => ({ ...q, id: q.id || randomUUID() })),
         createdBy: user.uid,
         creatorEmail: user.email || 'Unbekannt',
         createdAt: new Date().toISOString(),

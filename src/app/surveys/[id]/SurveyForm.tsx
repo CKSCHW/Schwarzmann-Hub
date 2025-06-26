@@ -8,9 +8,10 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import type { Survey } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { submitSurveyResponse } from '@/actions/surveyActions';
 import { Loader2, Send } from 'lucide-react';
@@ -22,7 +23,17 @@ interface SurveyFormProps {
 // Generate schema dynamically based on survey questions
 const generateSchema = (survey: Survey) => {
     const schemaObject = survey.questions.reduce((acc, question) => {
-        acc[question.id] = z.string().nonempty({ message: "Bitte wählen Sie eine Bewertung aus." }).transform(Number);
+        switch(question.type) {
+            case 'rating':
+                acc[question.id] = z.string({ required_error: "Bitte wählen Sie eine Bewertung aus."}).nonempty("Bitte wählen Sie eine Bewertung aus.").transform(Number);
+                break;
+            case 'multiple-choice':
+                acc[question.id] = z.string({ required_error: "Bitte wählen Sie eine Option aus." });
+                break;
+            case 'text':
+                acc[question.id] = z.string().nonempty({ message: "Bitte geben Sie eine Antwort ein." });
+                break;
+        }
         return acc;
     }, {} as Record<string, z.ZodType<any, any>>);
     return z.object(schemaObject);
@@ -56,6 +67,7 @@ export default function SurveyForm({ survey }: SurveyFormProps) {
                 description: result.message,
             });
             router.push('/surveys');
+            router.refresh(); // Refresh to show the updated list
         } else {
             toast({
                 title: "Fehler",
@@ -66,53 +78,86 @@ export default function SurveyForm({ survey }: SurveyFormProps) {
         }
     };
 
+    const renderQuestionInput = (question: Survey['questions'][0]) => {
+        switch (question.type) {
+            case 'rating':
+                return (
+                    <Controller
+                        name={question.id}
+                        control={control}
+                        render={({ field }) => (
+                            <div>
+                                <RadioGroup
+                                    onValueChange={field.onChange}
+                                    value={field.value?.toString()}
+                                    className="flex justify-between items-center max-w-sm mx-auto"
+                                >
+                                    {[1, 2, 3, 4, 5].map(value => (
+                                        <div key={value} className="flex flex-col items-center space-y-1">
+                                            <Label htmlFor={`${question.id}-${value}`}>{value}</Label>
+                                            <RadioGroupItem value={value.toString()} id={`${question.id}-${value}`} />
+                                        </div>
+                                    ))}
+                                </RadioGroup>
+                                <div className="flex justify-between text-xs text-muted-foreground mt-2 px-1 max-w-sm mx-auto">
+                                    <span>Trifft gar nicht zu</span>
+                                    <span>Trifft voll zu</span>
+                                </div>
+                            </div>
+                        )}
+                    />
+                );
+            case 'multiple-choice':
+                return (
+                    <Controller
+                        name={question.id}
+                        control={control}
+                        render={({ field }) => (
+                             <RadioGroup
+                                onValueChange={field.onChange}
+                                value={field.value as string}
+                                className="space-y-2"
+                            >
+                                {question.options?.map((option, i) => (
+                                    <Label key={i} htmlFor={`${question.id}-${i}`} className="flex items-center gap-3 p-3 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary cursor-pointer">
+                                        <RadioGroupItem value={option} id={`${question.id}-${i}`} />
+                                        <span>{option}</span>
+                                    </Label>
+                                ))}
+                            </RadioGroup>
+                        )}
+                    />
+                );
+            case 'text':
+                return (
+                    <Controller
+                        name={question.id}
+                        control={control}
+                        render={({ field }) => (
+                            <Textarea
+                                {...field}
+                                placeholder="Ihre anonyme Antwort..."
+                                rows={4}
+                            />
+                        )}
+                    />
+                );
+            default:
+                return <p>Unbekannter Fragetyp</p>;
+        }
+    }
+
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {survey.questions.map((question, index) => (
                 <Card key={question.id}>
                     <CardHeader>
-                        <CardTitle>Frage {index + 1}: {question.text}</CardTitle>
+                        <CardTitle>Frage {index + 1}</CardTitle>
+                        <CardDescription className="text-lg text-foreground">{question.text}</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Controller
-                            name={question.id}
-                            control={control}
-                            render={({ field }) => (
-                                <div>
-                                    <RadioGroup
-                                        onValueChange={field.onChange}
-                                        value={field.value?.toString()}
-                                        className="flex justify-between items-center"
-                                    >
-                                        <div className="flex flex-col items-center space-y-1">
-                                            <Label htmlFor={`${question.id}-1`}>1</Label>
-                                            <RadioGroupItem value="1" id={`${question.id}-1`} />
-                                        </div>
-                                        <div className="flex flex-col items-center space-y-1">
-                                            <Label htmlFor={`${question.id}-2`}>2</Label>
-                                            <RadioGroupItem value="2" id={`${question.id}-2`} />
-                                        </div>
-                                        <div className="flex flex-col items-center space-y-1">
-                                            <Label htmlFor={`${question.id}-3`}>3</Label>
-                                            <RadioGroupItem value="3" id={`${question.id}-3`} />
-                                        </div>
-                                        <div className="flex flex-col items-center space-y-1">
-                                            <Label htmlFor={`${question.id}-4`}>4</Label>
-                                            <RadioGroupItem value="4" id={`${question.id}-4`} />
-                                        </div>
-                                        <div className="flex flex-col items-center space-y-1">
-                                            <Label htmlFor={`${question.id}-5`}>5</Label>
-                                            <RadioGroupItem value="5" id={`${question.id}-5`} />
-                                        </div>
-                                    </RadioGroup>
-                                     <div className="flex justify-between text-xs text-muted-foreground mt-2 px-1">
-                                        <span>Trifft gar nicht zu</span>
-                                        <span>Trifft voll zu</span>
-                                    </div>
-                                </div>
-                            )}
-                        />
-                        {errors[question.id] && <p className="text-sm font-medium text-destructive mt-2">{errors[question.id]?.message}</p>}
+                       {renderQuestionInput(question)}
+                       {errors[question.id] && <p className="text-sm font-medium text-destructive mt-2">{errors[question.id]?.message as string}</p>}
                     </CardContent>
                 </Card>
             ))}

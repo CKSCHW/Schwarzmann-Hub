@@ -123,13 +123,14 @@ export interface NotificationWithStatus extends Notification {
 
 // --- Survey Types ---
 
-export const questionTypes = ["rating", "text"] as const;
+export const questionTypes = ["rating", "text", "multiple-choice"] as const;
 export type QuestionType = (typeof questionTypes)[number];
 
 export interface SurveyQuestion {
   id: string;
   text: string;
   type: QuestionType;
+  options?: string[];
 }
 
 export interface Survey {
