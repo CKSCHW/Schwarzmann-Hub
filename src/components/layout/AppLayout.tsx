@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   SidebarProvider,
   Sidebar,
@@ -23,8 +23,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
 import NotificationBell from "./NotificationBell";
-import { markNotificationAsClicked } from "@/actions/notificationActions";
 import { usePushManager } from "@/hooks/usePushManager";
+import { Suspense } from "react";
+import NotificationHandler from "./NotificationHandler";
 
 type NavItem = {
   href: string;
@@ -166,24 +167,7 @@ const UserMenu = () => {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const { user, loading, isAdmin } = useAuth();
-
-  // Effect for handling notification clicks from the URL
-  React.useEffect(() => {
-    if (user && searchParams.has('notification_id')) {
-        const notificationId = searchParams.get('notification_id');
-        if (notificationId) {
-            markNotificationAsClicked(notificationId, user.uid);
-            
-            // Clean up URL by removing the query parameter
-            const newParams = new URLSearchParams(searchParams.toString());
-            newParams.delete('notification_id');
-            const newUrl = `${pathname}${newParams.size > 0 ? '?' + newParams.toString() : ''}`;
-            router.replace(newUrl);
-        }
-    }
-  }, [user, searchParams, pathname, router]);
+  const { user, loading } = useAuth();
 
   // Effect for registering the service worker
   React.useEffect(() => {
@@ -244,6 +228,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (user) {
     return (
       <SidebarProvider defaultOpen={true}>
+        <Suspense>
+          <NotificationHandler />
+        </Suspense>
         <Sidebar side="left" variant="sidebar" collapsible="icon">
           <SidebarHeader className="p-4">
             <Link href="/" className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center">
