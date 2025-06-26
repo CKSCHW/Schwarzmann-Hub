@@ -114,12 +114,19 @@ const UserMenu = () => {
             </Link>
         </DropdownMenuItem>
         
-        {isSupported && permission !== 'denied' && (
-           <DropdownMenuItem onClick={handleToggleSubscription} disabled={loading}>
+        {isSupported ? (
+          permission === 'denied' ? (
+            <DropdownMenuItem disabled>
+              <BellOff className="mr-2 h-4 w-4" />
+              <span>Benachrichtigungen blockiert</span>
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={handleToggleSubscription} disabled={loading}>
               {isSubscribed ? <BellOff className="mr-2 h-4 w-4" /> : <BellRing className="mr-2 h-4 w-4" />}
               <span>{isSubscribed ? 'Benachrichtigungen deaktivieren' : 'Benachrichtigungen aktivieren'}</span>
-           </DropdownMenuItem>
-        )}
+            </DropdownMenuItem>
+          )
+        ) : null}
 
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>

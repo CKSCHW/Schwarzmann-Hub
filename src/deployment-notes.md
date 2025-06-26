@@ -99,7 +99,7 @@ If this step is not done *perfectly*, you will see the `CRITICAL CONFIGURATION E
 6.  Click the blue **"Generate new private key"** button. A warning will appear; click **"Generate key"** to confirm.
 7.  A JSON file (e.g., `work-news-hub-firebase-adminsdk-....json`) will be downloaded to your computer. **This file contains your key.**
 
-#### 4.2 VAPID Keys for Push Notifications (NEW & REQUIRED!)
+#### 4.2 VAPID Keys for Push Notifications (REQUIRED!)
 
 Push notifications require a set of secure keys called VAPID keys.
 
@@ -161,7 +161,7 @@ pm2 restart my-app
 
 Your app is now running, but it's only listening on `localhost:3000`. The final step is to configure Nginx to make it accessible to the public.
 
-### 6. Configure Nginx as a Reverse Proxy
+### 6. Configure Nginx (Initial Setup)
 
 This will direct public traffic from port 80 to your running application.
 
@@ -203,9 +203,47 @@ sudo nginx -t
 sudo systemctl restart nginx
 ```
 
-Your application should now be live! You can manage it using commands like `pm2 list`, `pm2 stop my-app`, and `pm2 logs my-app`.
+### 7. Secure Your Site with HTTPS (Let's Encrypt) - CRITICAL FOR PUSH NOTIFICATIONS
 
-### 7. Creating Users and Admins
+Push notifications and modern web features **require a secure (HTTPS) connection**. Your server is currently running on HTTP, which is why the notification button is not appearing. You can get a free SSL certificate from Let's Encrypt.
+
+**A. Install Certbot**
+
+Certbot is a tool that automates setting up SSL certificates.
+
+```bash
+sudo apt update
+sudo apt install certbot python3-certbot-nginx
+```
+
+**B. Obtain and Install the Certificate**
+
+Run this command, replacing `your_domain.com` with your actual domain name. This must be a real domain pointing to your server's IP address. **This will not work with a bare IP address.**
+
+```bash
+# Make sure to replace your_domain.com with your domain
+sudo certbot --nginx -d your_domain.com
+```
+
+Certbot will ask you a few questions:
+-   Enter your email address (for renewal notices).
+-   Agree to the Terms of Service.
+-   Choose whether to share your email with the Electronic Frontier Foundation (optional).
+-   It will then detect your Nginx configuration for `your_domain.com` and ask if you want to redirect HTTP traffic to HTTPS. **Choose option 2 (Redirect)**. This is the recommended and most secure option.
+
+Certbot will automatically update your `/etc/nginx/sites-available/my-app` file and restart Nginx to apply the changes.
+
+**C. Verify Automatic Renewal**
+
+Certbot automatically sets up a timer to renew your certificate before it expires. You can test that this works:
+
+```bash
+sudo certbot renew --dry-run
+```
+
+If it completes without errors, you are all set. Your site is now accessible via `https://your_domain.com`, and push notifications will be supported.
+
+### 8. Creating Users and Admins
 
 Your application uses Firebase Authentication. Users are not created in the code but in the Firebase console.
 
