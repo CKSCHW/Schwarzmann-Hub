@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -96,14 +97,12 @@ export function usePushManager() {
         return;
     }
 
-    // Demo mode for non-secure contexts (like local network without SSL)
     if (!window.isSecureContext) {
         toast({
-            title: 'Demo-Modus Aktiviert',
-            description: 'Benachrichtigungen sind für die Präsentation simuliert. Im echten Betrieb ist HTTPS nötig.',
+            title: 'Unsichere Verbindung',
+            description: 'Push-Benachrichtigungen sind nur über eine sichere (HTTPS) Verbindung möglich.',
+            variant: 'destructive',
         });
-        setIsSubscribed(true); // Simulate successful subscription for UI
-        setPermission('granted');
         return;
     }
 
@@ -158,17 +157,6 @@ export function usePushManager() {
   }, [isSupported, user, toast]);
 
   const unsubscribeFromPush = useCallback(async () => {
-    // Handle demo mode
-    if (!window.isSecureContext && isSubscribed) {
-        toast({
-            title: 'Demo-Modus Deaktiviert',
-            description: 'Simulation der Benachrichtigungs-Deaktivierung.',
-        });
-        setIsSubscribed(false);
-        setPermission('default');
-        return;
-    }
-    
     if (!subscription || !user) return;
     
     setLoading(true);
@@ -185,7 +173,7 @@ export function usePushManager() {
     } finally {
         setLoading(false);
     }
-  }, [subscription, user, toast, isSubscribed]);
+  }, [subscription, user, toast]);
 
   return { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, isSupported, loading, isIos, isPwa };
 }
