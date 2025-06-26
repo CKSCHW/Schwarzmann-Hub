@@ -44,24 +44,24 @@ Run this command in your project folder. This downloads `ngrok` locally into you
 npm install
 ```
 
-**Step 2: Connect Your Account**
+**Step 2: Connect Your Account (The Critical Step)**
 
-This is the crucial step. You will register `ngrok` for your user account.
+This step registers `ngrok` for your project, ensuring the correct version is used.
 
 1.  **Sign Up:** Go to [https://dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup) and create a free account.
 2.  **Get Your Authtoken:** Go to the "Your Authtoken" page: [https://dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken).
 3.  **Copy the Command:** You will see a command that looks like this: `ngrok config add-authtoken <YOUR_PERSONAL_TOKEN>`. Copy this entire line.
-4.  **Run the Command in Your Terminal (WITHOUT `sudo`!):**
+4.  **Run the Command in Your Terminal using `npx`:**
     *   Open a new terminal window in your project folder.
-    *   Paste the command you copied and press Enter. **Do NOT use `sudo`**.
+    *   **IMPORTANT:** Type `npx` at the beginning of the command you copied. `npx` tells your computer to use the `ngrok` version that was installed locally in your project, which solves the authentication error.
 
+    The final command should look like this:
     ```bash
-    # Run this command exactly as copied, without sudo at the beginning
-    ngrok config add-authtoken <YOUR_PERSONAL_TOKEN>
+    # Run this command exactly as shown, with "npx" at the start.
+    npx ngrok config add-authtoken <YOUR_PERSONAL_TOKEN>
     ```
-    Running it **without `sudo`** is critical because it saves the key for your current user (`developer`). Running it with `sudo` saves it for the `root` user, which causes the authentication error you've been seeing.
 
-This command saves your token to a configuration file in your user's home directory. You will not need to do this again on this machine.
+This command saves your token to a configuration file that the project's local `ngrok` can find. You will not need to do this again on this machine.
 
 ### How to Use `ngrok` to Test Push Notifications
 
