@@ -31,23 +31,42 @@ export function usePushManager() {
   const [isSupported, setIsSupported] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // New state for iOS / PWA detection
   const [isIos, setIsIos] = useState(false);
   const [isPwa, setIsPwa] = useState(false);
 
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const onPermissionChange = () => {
+        setPermission(Notification.permission);
+      };
+
       if ('serviceWorker' in navigator && 'PushManager' in window) {
         setIsSupported(true);
-        setPermission(Notification.permission);
+        // Use Permissions API for reactive updates if available
+        if ('permissions' in navigator) {
+          navigator.permissions.query({ name: 'notifications' }).then((status) => {
+            setPermission(status.state);
+            status.onchange = onPermissionChange;
+          });
+        } else {
+          // Fallback for older browsers
+          setPermission(Notification.permission);
+        }
       } else {
         setIsSupported(false);
       }
       
-      // Detect iOS and PWA mode
       setIsIos(/iPad|iPhone|iPod/.test(navigator.userAgent));
       setIsPwa(window.matchMedia('(display-mode: standalone)').matches);
+      
+      // Cleanup
+      return () => {
+        if ('permissions' in navigator) {
+            navigator.permissions.query({name: 'notifications'}).then(status => {
+                status.onchange = null;
+            }).catch(() => {});
+        }
+      }
     }
   }, []);
 
@@ -97,12 +116,28 @@ export function usePushManager() {
         setPermission('granted');
         toast({ title: 'Erfolg', description: 'Sie erhalten nun Benachrichtigungen.' });
       } else {
+        await newSubscription.unsubscribe();
         throw new Error(result.error);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to subscribe to push notifications:', error);
-      toast({ title: 'Fehler bei der Anmeldung', description: 'Die Benachrichtigungen konnten nicht aktiviert werden.', variant: 'destructive'});
-      setPermission(Notification.permission);
+      if (error.name === 'NotAllowedError') {
+        setPermission('denied');
+        toast({ 
+          title: 'Benachrichtigungen blockiert', 
+          description: 'Sie können die Berechtigung in den Browser-Einstellungen ändern.',
+          variant: 'destructive'
+        });
+      } else {
+        toast({ 
+          title: 'Fehler bei der Anmeldung', 
+          description: 'Die Benachrichtigungen konnten nicht aktiviert werden.', 
+          variant: 'destructive'
+        });
+        if ('permission' in Notification) {
+          setPermission(Notification.permission);
+        }
+      }
     } finally {
       setLoading(false);
     }
