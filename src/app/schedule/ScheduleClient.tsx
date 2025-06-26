@@ -104,9 +104,9 @@ export default function ScheduleClient({ initialSchedules, isAdmin, initialDownl
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleUpload} className="flex items-center gap-4">
-              <Input ref={fileInputRef} type="file" name="file" accept="application/pdf" disabled={isUploading} />
-              <Button type="submit" disabled={isUploading}>
+            <form onSubmit={handleUpload} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <Input ref={fileInputRef} type="file" name="file" accept="application/pdf" disabled={isUploading} className="flex-grow" />
+              <Button type="submit" disabled={isUploading} className="w-full sm:w-auto">
                 {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UploadCloud className="mr-2 h-4 w-4" />}
                 Hochladen
               </Button>
@@ -121,88 +121,96 @@ export default function ScheduleClient({ initialSchedules, isAdmin, initialDownl
           <CardTitle>Verfügbare Pläne</CardTitle>
           {isAdmin && <CardDescription>Klicken Sie auf einen Eintrag, um die Download-Statistiken anzuzeigen.</CardDescription>}
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Accordion type="multiple" className="w-full">
             {schedules.length > 0 ? (
               schedules.map((schedule) => {
                 const scheduleReceipts = getReceiptsForSchedule(schedule.id);
                 return (
                   <AccordionItem value={schedule.id} key={schedule.id}>
-                    <div className="flex items-center border-b">
-                      <div className="flex-grow">
-                          <Table>
-                            <TableBody>
-                              <TableRow className="border-b-0 hover:bg-transparent">
-                                <TableCell className="font-medium flex items-center w-[40%]">
-                                  <FileText className="mr-2 h-5 w-5 text-primary" />
-                                  {schedule.name}
-                                </TableCell>
-                                <TableCell className="w-[20%]">{new Date(schedule.dateAdded).toLocaleDateString('de-DE')}</TableCell>
-                                <TableCell className="w-[15%]">{formatBytes(schedule.size)}</TableCell>
-                                <TableCell className="text-right space-x-2 w-[25%]">
-                                  <Button asChild variant="ghost" size="sm">
-                                    <a href={`/api/schedules/download/${schedule.id}`} download={schedule.name}>
-                                      <Download className="mr-2 h-4 w-4" />
-                                      Herunterladen
-                                    </a>
+                    <div className="flex items-start md:items-center border-b">
+                      <div className="flex-grow p-4">
+                        <div className="flex flex-col md:flex-row md:items-center gap-y-3 md:gap-x-4">
+                          {/* Left side: File Name */}
+                          <div className="flex-1 font-medium flex items-center min-w-0">
+                            <FileText className="mr-2 h-5 w-5 text-primary flex-shrink-0" />
+                            <span className="truncate" title={schedule.name}>{schedule.name}</span>
+                          </div>
+
+                          {/* Middle: Meta Info (Date & Size) */}
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground flex-shrink-0 pl-7 md:pl-0">
+                            <span>{new Date(schedule.dateAdded).toLocaleDateString('de-DE')}</span>
+                            <span className="hidden sm:inline">·</span>
+                            <span className="hidden sm:inline">{formatBytes(schedule.size)}</span>
+                          </div>
+
+                          {/* Right side: Actions */}
+                          <div className="flex gap-2 justify-start md:justify-end items-center flex-shrink-0 self-start md:self-center">
+                            <Button asChild variant="ghost" size="sm">
+                              <a href={`/api/schedules/download/${schedule.id}`} download={schedule.name}>
+                                <Download className="mr-2 h-4 w-4" />
+                                Herunterladen
+                              </a>
+                            </Button>
+                            {isAdmin && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="icon" className="h-9 w-9" disabled={isDeleting === schedule.id}>
+                                    {isDeleting === schedule.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                                   </Button>
-                                  {isAdmin && (
-                                    <AlertDialog>
-                                      <AlertDialogTrigger asChild>
-                                        <Button variant="destructive" size="icon" className="h-9 w-9" disabled={isDeleting === schedule.id}>
-                                          {isDeleting === schedule.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                        </Button>
-                                      </AlertDialogTrigger>
-                                      <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                          <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                            Diese Aktion kann nicht rückgängig gemacht werden. Der Plan wird endgültig vom Server gelöscht.
-                                          </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDelete(schedule.id)}>Löschen</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                      </AlertDialogContent>
-                                    </AlertDialog>
-                                  )}
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Diese Aktion kann nicht rückgängig gemacht werden. Der Plan wird endgültig vom Server gelöscht.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(schedule.id)}>Löschen</AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
+                        </div>
                       </div>
                       {isAdmin && (
-                        <AccordionTrigger className="p-4">
-                           <span className="flex items-center gap-2 text-sm font-normal text-muted-foreground">
-                                {scheduleReceipts.length}
-                                <Users className="h-4 w-4" />
-                           </span>
-                        </AccordionTrigger>
+                        <div className="p-4 self-stretch flex items-center border-l">
+                          <AccordionTrigger className="p-2 -m-2">
+                             <span className="flex items-center gap-2 text-sm font-normal text-muted-foreground">
+                                  {scheduleReceipts.length}
+                                  <Users className="h-4 w-4" />
+                             </span>
+                          </AccordionTrigger>
+                        </div>
                       )}
                     </div>
 
                     {isAdmin && (
                       <AccordionContent>
                         {scheduleReceipts.length > 0 ? (
-                           <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Mitarbeiter (E-Mail)</TableHead>
-                                <TableHead>Heruntergeladen am</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {scheduleReceipts.map(receipt => (
-                                <TableRow key={receipt.id}>
-                                  <TableCell>{receipt.user?.email ?? 'Unbekannt'}</TableCell>
-                                  <TableCell>{new Date(receipt.downloadedAt).toLocaleString('de-DE')}</TableCell>
+                           <div className="overflow-x-auto">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Mitarbeiter (E-Mail)</TableHead>
+                                  <TableHead>Heruntergeladen am</TableHead>
                                 </TableRow>
-                              ))}
-                            </TableBody>
-                           </Table>
+                              </TableHeader>
+                              <TableBody>
+                                {scheduleReceipts.map(receipt => (
+                                  <TableRow key={receipt.id}>
+                                    <TableCell>{receipt.user?.email ?? 'Unbekannt'}</TableCell>
+                                    <TableCell>{new Date(receipt.downloadedAt).toLocaleString('de-DE')}</TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                           </div>
                         ) : (
-                          <p className="text-muted-foreground text-center py-4">
+                          <p className="text-muted-foreground text-center py-4 px-4">
                             Dieser Plan wurde noch von niemandem heruntergeladen.
                           </p>
                         )}
