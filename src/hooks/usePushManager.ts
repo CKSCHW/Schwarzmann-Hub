@@ -113,8 +113,11 @@ export function usePushManager() {
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       });
+      
+      // Convert the PushSubscription object to a plain JSON object before sending
+      const subscriptionJson = newSubscription.toJSON();
+      const result = await saveSubscription(subscriptionJson, user.uid);
 
-      const result = await saveSubscription(newSubscription, user.uid);
       if (result.success) {
         setSubscription(newSubscription);
         setIsSubscribed(true);

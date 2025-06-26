@@ -7,14 +7,14 @@ import webpush from 'web-push';
 import type { Notification, PushNotificationPayload, NotificationReceipt, NotificationWithStatus, StoredPushSubscription } from '@/types';
 
 // This function is called from the client to save their subscription
-export async function saveSubscription(subscription: PushSubscription, userId: string) {
+export async function saveSubscription(subscription: Omit<StoredPushSubscription, 'userId'>, userId: string) {
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
     console.error('VAPID keys are not set in environment variables.');
     return { success: false, error: 'VAPID keys are not configured.' };
   }
   
   const sub: StoredPushSubscription = {
-    ...JSON.parse(JSON.stringify(subscription)), // Ensure it's a plain object
+    ...subscription,
     userId: userId,
   };
 

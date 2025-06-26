@@ -85,7 +85,14 @@ export interface PushNotificationPayload {
     notificationId?: string;
 }
 
-export interface StoredPushSubscription extends PushSubscription {
+// This represents the plain object version of a PushSubscription, suitable for JSON serialization
+export interface StoredPushSubscription {
+  endpoint: string;
+  expirationTime?: number | null;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
   userId: string;
 }
 
