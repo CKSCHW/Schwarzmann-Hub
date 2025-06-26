@@ -18,7 +18,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarDays, LogOut, ShieldCheck, Newspaper, BellOff, BellRing } from "lucide-react";
+import { Home, CalendarDays, LogOut, ShieldCheck, Newspaper, BellOff, BellRing, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
@@ -95,7 +95,12 @@ const UserMenu = () => {
         <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
         {isAdmin && <DropdownMenuLabel className="text-xs font-normal text-accent -mt-2">Administrator</DropdownMenuLabel>}
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled>Profil</DropdownMenuItem>
+        <DropdownMenuItem asChild>
+            <Link href="/profile">
+              <User className="mr-2 h-4 w-4" />
+              <span>Profil</span>
+            </Link>
+        </DropdownMenuItem>
         
         {isSupported && permission !== 'denied' && (
            <DropdownMenuItem onClick={handleToggleSubscription} disabled={loading}>
