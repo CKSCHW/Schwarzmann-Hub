@@ -31,70 +31,63 @@ export function usePushManager() {
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [isSupported, setIsSupported] = useState(false);
   const [loading, setLoading] = useState(true);
-
   const [isIos, setIsIos] = useState(false);
-  const [isPwa, setIsPwa] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const onPermissionChange = () => {
-        setPermission(Notification.permission);
-      };
+      const setup = async () => {
+        setLoading(true);
+        const runningOnIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        setIsIos(runningOnIos);
 
-      if ('serviceWorker' in navigator && 'PushManager' in window) {
-        setIsSupported(true);
-        if ('permissions' in navigator) {
-          navigator.permissions.query({ name: 'notifications' }).then((status) => {
-            setPermission(status.state);
-            status.onchange = onPermissionChange;
-          });
-        } else {
-          setPermission(Notification.permission);
-        }
-      } else {
-        setIsSupported(false);
-      }
-      
-      setIsIos(/iPad|iPhone|iPod/.test(navigator.userAgent));
-      setIsPwa(window.matchMedia('(display-mode: standalone)').matches);
-      
-      return () => {
-        if ('permissions' in navigator) {
-            navigator.permissions.query({name: 'notifications'}).then(status => {
-                status.onchange = null;
-            }).catch(() => {});
-        }
-      }
-    }
-  }, []);
+        const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+        setIsSupported(supported);
 
-  useEffect(() => {
-    if (!isSupported || !user) {
+        if (supported) {
+          try {
+            const permissionStatus = await navigator.permissions.query({ name: 'notifications' });
+            setPermission(permissionStatus.state);
+            permissionStatus.onchange = () => setPermission(permissionStatus.state);
+          } catch (e) {
+            // Safari on iOS before 16.4 does not support the Permissions API for notifications.
+            // Fallback to Notification.permission.
+            setPermission(Notification.permission);
+          }
+
+          if (user) {
+            try {
+              const registration = await navigator.serviceWorker.ready;
+              const sub = await registration.pushManager.getSubscription();
+              if (sub) {
+                setSubscription(sub);
+                setIsSubscribed(true);
+              } else {
+                setIsSubscribed(false);
+              }
+            } catch (error) {
+              console.error('Error getting push subscription:', error);
+              setIsSubscribed(false);
+            }
+          }
+        }
         setLoading(false);
-        return;
-    };
-
-    const getSubscription = async () => {
-      setLoading(true);
-      if (window.isSecureContext) {
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          const sub = await registration.pushManager.getSubscription();
-          setSubscription(sub);
-          setIsSubscribed(!!sub);
-        } catch (error) {
-          console.error('Error getting push subscription:', error);
-        }
-      }
-      setLoading(false);
-    };
-    getSubscription();
-  }, [isSupported, user]);
+      };
+      setup();
+    }
+  }, [user]);
 
   const subscribeToPush = useCallback(async () => {
     if (!isSupported) {
+      if (isIos && !window.matchMedia('(display-mode: standalone)').matches) {
+          toast({
+            title: 'Hinweis für iPhone-Nutzer',
+            description: 'Um Benachrichtigungen zu erhalten, fügen Sie diese App bitte zuerst zu Ihrem Home-Bildschirm hinzu (über das "Teilen"-Menü in Safari). Öffnen Sie die App dann vom Home-Bildschirm und aktivieren Sie die Benachrichtigungen hier erneut.',
+            duration: 12000,
+          });
+      } else {
         toast({ title: 'Nicht unterstützt', description: 'Ihr Browser unterstützt keine Push-Benachrichtigungen.', variant: 'destructive'});
-        return;
+      }
+      return;
     }
 
     if (!window.isSecureContext) {
@@ -107,7 +100,6 @@ export function usePushManager() {
     }
 
     if (!user || !VAPID_PUBLIC_KEY) {
-      console.error('Push not supported, user not logged in, or VAPID key missing.');
       if (!VAPID_PUBLIC_KEY) {
         toast({ title: 'Fehler', description: 'Push-Benachrichtigungen sind serverseitig nicht konfiguriert.', variant: 'destructive'});
       }
@@ -144,17 +136,15 @@ export function usePushManager() {
       } else {
         toast({ 
           title: 'Fehler bei der Anmeldung', 
-          description: 'Die Benachrichtigungen konnten nicht aktiviert werden.', 
+          description: `Die Benachrichtigungen konnten nicht aktiviert werden. (${error.name})`, 
           variant: 'destructive'
         });
-        if ('permission' in Notification) {
-          setPermission(Notification.permission);
-        }
+        setPermission(Notification.permission);
       }
     } finally {
       setLoading(false);
     }
-  }, [isSupported, user, toast]);
+  }, [isSupported, user, toast, isIos]);
 
   const unsubscribeFromPush = useCallback(async () => {
     if (!subscription || !user) return;
@@ -175,5 +165,5 @@ export function usePushManager() {
     }
   }, [subscription, user, toast]);
 
-  return { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, isSupported, loading, isIos, isPwa };
+  return { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, loading };
 }
