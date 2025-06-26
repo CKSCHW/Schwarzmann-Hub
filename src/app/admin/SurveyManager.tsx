@@ -3,23 +3,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Loader2, Edit, PieChart } from 'lucide-react';
-import type { Survey, SimpleUser } from '@/types';
-import { deleteSurvey } from '@/actions/surveyActions';
+import { PlusCircle, Trash2, Loader2, Edit, PieChart, Copy } from 'lucide-react';
+import type { Survey } from '@/types';
+import { deleteSurvey, duplicateSurvey } from '@/actions/surveyActions';
 
 interface SurveyManagerProps {
   initialSurveys: Survey[];
-  currentUser: SimpleUser;
 }
 
-export default function SurveyManager({ initialSurveys, currentUser }: SurveyManagerProps) {
+export default function SurveyManager({ initialSurveys }: SurveyManagerProps) {
   const [surveys, setSurveys] = useState(initialSurveys);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [isDuplicating, setIsDuplicating] = useState<string | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleDelete = async (surveyId: string) => {
     setIsDeleting(surveyId);
@@ -31,6 +33,18 @@ export default function SurveyManager({ initialSurveys, currentUser }: SurveyMan
         toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
     } finally {
         setIsDeleting(null);
+    }
+  }
+
+  const handleDuplicate = async (surveyId: string) => {
+    setIsDuplicating(surveyId);
+    try {
+        const newSurvey = await duplicateSurvey(surveyId);
+        toast({ title: 'Erfolg', description: 'Umfrage wurde dupliziert.' });
+        router.push(`/admin/surveys/edit/${newSurvey.id}`);
+    } catch (error: any) {
+        toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
+        setIsDuplicating(null);
     }
   }
 
@@ -78,6 +92,10 @@ export default function SurveyManager({ initialSurveys, currentUser }: SurveyMan
                                 <Edit className="h-4 w-4 mr-2" />
                                 Bearbeiten
                             </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleDuplicate(survey.id)} disabled={isDuplicating === survey.id}>
+                            {isDuplicating === survey.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4 mr-2" />}
+                            Duplizieren
                         </Button>
                         <Button variant="destructive" size="sm" onClick={() => handleDelete(survey.id)} disabled={isDeleting === survey.id}>
                             {isDeleting === survey.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}

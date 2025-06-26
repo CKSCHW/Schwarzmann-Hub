@@ -103,6 +103,36 @@ export async function deleteSurvey(surveyId: string): Promise<void> {
     revalidatePath('/admin');
 }
 
+export async function duplicateSurvey(surveyId: string): Promise<Survey> {
+    const user = await verifySurveyManager();
+    const originalSurveyRef = adminDb.collection('surveys').doc(surveyId);
+    const originalSurveyDoc = await originalSurveyRef.get();
+
+    if (!originalSurveyDoc.exists) {
+        throw new Error("Original-Umfrage nicht gefunden.");
+    }
+
+    const originalSurveyData = originalSurveyDoc.data() as Survey;
+
+    const newSurveyData: Omit<Survey, 'id'> = {
+        ...originalSurveyData,
+        title: `${originalSurveyData.title} (Kopie)`,
+        assignedUserIds: [], // Reset participants
+        completionCount: 0, // Reset completion count
+        createdBy: user.uid,
+        creatorEmail: user.email || 'Unbekannt',
+        createdAt: new Date().toISOString(),
+    };
+
+    const docRef = await adminDb.collection('surveys').add(newSurveyData);
+    const newSurvey = { ...newSurveyData, id: docRef.id };
+
+    revalidatePath('/admin?tab=surveys');
+    
+    return newSurvey;
+}
+
+
 export async function getSurveysCreatedBy(userId: string): Promise<Survey[]> {
     const snapshot = await adminDb.collection('surveys').where('createdBy', '==', userId).get();
     const surveys = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Survey));
@@ -125,11 +155,11 @@ export async function getSurveysForUser(): Promise<SurveyWithCompletion[]> {
     const surveysSnapshot = await adminDb.collection('surveys')
         .where('assignedUserIds', 'array-contains', user.uid)
         .get();
-
-    const surveys = surveysSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Survey));
+    
+    const surveysData = surveysSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Survey));
     
     // Manually sort by creation date, descending.
-    surveys.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const surveys = surveysData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
 
     if (surveys.length === 0) return [];
@@ -156,7 +186,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
     if (!surveyDoc.exists) return null;
 
     const survey = { id: surveyDoc.id, ...surveyDoc.data() } as Survey;
-    if (!survey.assignedUserIds.includes(user.uid)) {
+    if (!survey.assignedUserIds.includes(user.uid) && !user.isAdmin) {
         throw new Error("Sie sind nicht für diese Umfrage berechtigt.");
     }
 
@@ -205,7 +235,7 @@ export async function submitSurveyResponse(
           throw new Error('Umfrage nicht gefunden.');
       }
       const surveyData = surveyDoc.data() as Survey;
-      if (!surveyData.assignedUserIds.includes(user.uid)) {
+      if (!surveyData.assignedUserIds.includes(user.uid) && !user.isAdmin) {
           throw new Error('Sie sind nicht für diese Umfrage berechtigt.');
       }
 
