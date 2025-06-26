@@ -126,7 +126,12 @@ const UserMenu = () => {
               <span>{isSubscribed ? 'Benachrichtigungen deaktivieren' : 'Benachrichtigungen aktivieren'}</span>
             </DropdownMenuItem>
           )
-        ) : null}
+        ) : (
+          <DropdownMenuItem disabled>
+            <BellOff className="mr-2 h-4 w-4" />
+            <span>Benachrichtigungen (HTTPS nötig)</span>
+          </DropdownMenuItem>
+        )}
 
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
