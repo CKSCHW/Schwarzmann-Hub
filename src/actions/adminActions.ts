@@ -313,14 +313,26 @@ export async function getAppointments(): Promise<Appointment[]> {
 
 // Action to create a new appointment
 export async function createAppointment(appointmentData: Omit<Appointment, 'id'>): Promise<Appointment> {
+    await verifyAdmin();
     const docRef = await adminDb.collection('appointments').add(appointmentData);
     revalidatePath('/admin');
     revalidatePath('/dashboard');
     return { id: docRef.id, ...appointmentData };
 }
 
+// Action to update an existing appointment
+export async function updateAppointment(id: string, appointmentData: Omit<Appointment, 'id'>): Promise<Appointment> {
+    await verifyAdmin();
+    const appointmentRef = adminDb.collection('appointments').doc(id);
+    await appointmentRef.update(appointmentData);
+    revalidatePath('/admin');
+    revalidatePath('/dashboard');
+    return { id: id, ...appointmentData };
+}
+
 // Action to delete an appointment
 export async function deleteAppointment(id: string): Promise<void> {
+    await verifyAdmin();
     await adminDb.collection('appointments').doc(id).delete();
     revalidatePath('/admin');
     revalidatePath('/dashboard');
@@ -345,6 +357,7 @@ export async function getUsersWithGroups(): Promise<SimpleUser[]> {
 }
 
 export async function updateUserGroups(uid: string, groups: UserGroup[]): Promise<void> {
+    await verifyAdmin();
     const user = await adminAuth.getUser(uid);
     const existingClaims = user.customClaims || {};
 

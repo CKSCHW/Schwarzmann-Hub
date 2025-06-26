@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -18,9 +18,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar as CalendarIcon, Loader2, PlusCircle, Trash2, CalendarPlus } from 'lucide-react';
+import { Calendar as CalendarIcon, Loader2, PlusCircle, Trash2, CalendarPlus, Edit } from 'lucide-react';
 
-import { createAppointment, deleteAppointment } from '@/actions/adminActions';
+import { createAppointment, deleteAppointment, updateAppointment } from '@/actions/adminActions';
 import type { Appointment, UserGroup } from '@/types';
 import { userGroups } from '@/types';
 import { cn } from '@/lib/utils';
@@ -43,8 +43,9 @@ interface AppointmentManagerProps {
 
 export default function AppointmentManager({ initialAppointments }: AppointmentManagerProps) {
   const [appointments, setAppointments] = useState(initialAppointments);
-  const [isCreating, setIsCreating] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<AppointmentFormValues>({
@@ -56,29 +57,64 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
     },
   });
 
+  const handleEditClick = (appointment: Appointment) => {
+    setEditingId(appointment.id);
+    form.reset({
+      title: appointment.title,
+      description: appointment.description || '',
+      date: new Date(appointment.date),
+      groups: appointment.groups || [],
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    form.reset({
+      title: '',
+      description: '',
+      groups: [],
+      date: undefined,
+    });
+  };
+
   const onSubmit = async (data: AppointmentFormValues) => {
-    setIsCreating(true);
+    setIsSubmitting(true);
     try {
       const appointmentData = {
         ...data,
         date: data.date.toISOString(),
         groups: data.groups as UserGroup[],
       };
-      const newAppointment = await createAppointment(appointmentData);
-      setAppointments((prev) => [newAppointment, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      form.reset();
-       toast({
-        title: 'Termin erstellt',
-        description: `Der Termin "${newAppointment.title}" wurde erfolgreich gespeichert.`,
-      });
+      
+      if (editingId) {
+        const updatedAppointment = await updateAppointment(editingId, appointmentData);
+        setAppointments((prev) => 
+          prev.map((a) => a.id === editingId ? updatedAppointment : a)
+              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        );
+        toast({
+          title: 'Termin aktualisiert',
+          description: `Der Termin "${updatedAppointment.title}" wurde erfolgreich geändert.`,
+        });
+      } else {
+        const newAppointment = await createAppointment(appointmentData);
+        setAppointments((prev) => 
+          [newAppointment, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        );
+        toast({
+          title: 'Termin erstellt',
+          description: `Der Termin "${newAppointment.title}" wurde erfolgreich gespeichert.`,
+        });
+      }
+      handleCancelEdit();
     } catch (error) {
       toast({
-        title: 'Fehler beim Erstellen',
+        title: editingId ? 'Fehler beim Aktualisieren' : 'Fehler beim Erstellen',
         description: 'Der Termin konnte nicht gespeichert werden.',
         variant: 'destructive',
       });
     } finally {
-      setIsCreating(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -102,16 +138,21 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
     }
   };
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <CalendarPlus className="h-5 w-5" />
-              Neuen Termin erstellen
+              {editingId ? <Edit className="h-5 w-5" /> : <CalendarPlus className="h-5 w-5" />}
+              {editingId ? 'Termin bearbeiten' : 'Neuen Termin erstellen'}
             </CardTitle>
-            <CardDescription>Erstellen Sie Termine für bestimmte Mitarbeitergruppen.</CardDescription>
+            <CardDescription>
+              {editingId ? 'Ändern Sie die Details des Termins.' : 'Erstellen Sie Termine für bestimmte Mitarbeitergruppen.'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
@@ -159,7 +200,7 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
                             mode="single"
                             selected={field.value}
                             onSelect={field.onChange}
-                            disabled={(date) => date < new Date()}
+                            disabled={(date) => date < today}
                             initialFocus
                           />
                         </PopoverContent>
@@ -225,10 +266,23 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
                     </FormItem>
                   )}
                 />
-                <Button type="submit" disabled={isCreating}>
-                  {isCreating ? <Loader2 className="animate-spin mr-2" /> : <PlusCircle className="mr-2" />}
-                  Termin speichern
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <Loader2 className="animate-spin mr-2" />
+                    ) : editingId ? (
+                      <Edit className="mr-2" />
+                    ) : (
+                      <PlusCircle className="mr-2" />
+                    )}
+                    {editingId ? 'Änderungen speichern' : 'Termin speichern'}
+                  </Button>
+                  {editingId && (
+                    <Button type="button" variant="outline" onClick={handleCancelEdit}>
+                      Abbrechen
+                    </Button>
+                  )}
+                </div>
               </form>
             </Form>
           </CardContent>
@@ -246,7 +300,7 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
                   <TableHead>Titel</TableHead>
                   <TableHead>Datum</TableHead>
                   <TableHead>Gruppen</TableHead>
-                  <TableHead className="text-right">Aktion</TableHead>
+                  <TableHead className="text-right">Aktionen</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -257,15 +311,26 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
                       <TableCell>{new Date(appointment.date).toLocaleDateString('de-DE')}</TableCell>
                       <TableCell className="text-xs">{appointment.groups.length > 0 ? appointment.groups.join(', ') : 'Alle'}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(appointment.id)}
-                          disabled={isDeleting === appointment.id}
-                          aria-label="Termin löschen"
-                        >
-                          {isDeleting === appointment.id ? <Loader2 className="animate-spin h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
-                        </Button>
+                        <div className="flex justify-end items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEditClick(appointment)}
+                            disabled={isSubmitting}
+                            aria-label="Termin bearbeiten"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(appointment.id)}
+                            disabled={isDeleting === appointment.id}
+                            aria-label="Termin löschen"
+                          >
+                            {isDeleting === appointment.id ? <Loader2 className="animate-spin h-4 w-4" /> : <Trash2 className="h-4 w-4" />}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
