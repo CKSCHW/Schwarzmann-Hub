@@ -4,6 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import { adminDb, adminStorage, getCurrentUser } from '@/lib/firebase-admin';
 import type { ScheduleFile } from '@/types';
+import { sendAndSavePushNotification } from './notificationActions';
 
 const BUCKET_NAME = 'work-news-hub.appspot.com';
 
@@ -59,6 +60,13 @@ export async function uploadSchedule(formData: FormData): Promise<{ success: boo
         await docRef.set({
             ...newSchedule,
             id: docRef.id,
+        });
+
+        // Send push notification
+        await sendAndSavePushNotification({
+            title: "Neuer Wochenplan",
+            body: `Der Plan "${file.name}" wurde hochgeladen.`,
+            url: "/schedule",
         });
 
         revalidatePath('/schedule');

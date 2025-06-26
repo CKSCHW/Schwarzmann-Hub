@@ -61,3 +61,41 @@ export interface SimpleUser {
 export interface ReadReceiptWithUser extends ReadReceipt {
     user?: SimpleUser;
 }
+
+
+// --- Push Notification & System Types ---
+
+export interface PushNotificationPayload {
+    title: string;
+    body: string;
+    icon?: string;
+    url?: string;
+    notificationId?: string;
+}
+
+export interface StoredPushSubscription extends PushSubscription {
+  userId: string;
+}
+
+export interface Notification {
+  id: string;
+  title:string;
+  body: string;
+  url: string;
+  icon?: string;
+  createdAt: string; // ISO string
+}
+
+export interface NotificationReceipt {
+  id: string; // compound key userId_notificationId
+  userId: string;
+  notificationId: string;
+  readAt?: string; // ISO string
+  clickedAt?: string; // ISO string
+  isDeleted?: boolean;
+}
+
+export interface NotificationWithStatus extends Notification {
+  isRead: boolean;
+  isClicked: boolean;
+}
