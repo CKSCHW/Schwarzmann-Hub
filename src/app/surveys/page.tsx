@@ -9,6 +9,27 @@ export const dynamic = 'force-dynamic';
 
 export default async function SurveysPage() {
     const allSurveys = await getSurveysForUser();
+
+    // Case 1: User has no surveys assigned at all.
+    if (allSurveys.length === 0) {
+        return (
+            <div className="space-y-8">
+                <section>
+                    <h1 className="text-3xl font-headline font-semibold mb-2">Ihre Umfragen</h1>
+                    <p className="text-muted-foreground">
+                        Hier finden Sie Umfragen, zu denen Sie eingeladen wurden. Ihre Antworten sind anonym.
+                    </p>
+                </section>
+                <div className="text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
+                    <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground" />
+                    <h3 className="mt-2 text-lg font-medium">Keine Umfragen verfügbar</h3>
+                    <p className="mt-1 text-sm">Für Sie sind im Moment keine Umfragen zugewiesen.</p>
+                </div>
+            </div>
+        );
+    }
+    
+    // Case 2: User has surveys, so we split them into open and completed.
     const openSurveys = allSurveys.filter(s => !s.completed);
     const completedSurveys = allSurveys.filter(s => s.completed);
 
