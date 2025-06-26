@@ -1,65 +1,79 @@
-// This service worker file is intentionally kept simple for clarity.
-// It handles push notifications and click events.
 
-self.addEventListener('push', function(event) {
-  // Fallback for when no data is sent with the push message.
-  if (!event.data) {
-    console.warn('Push event but no data');
-    return;
-  }
-  
+// This event listener is triggered when a push message is received.
+self.addEventListener('push', (event) => {
+  // Parse the incoming data as JSON.
   const data = event.data.json();
-  
-  const title = data.title || 'Neue Benachrichtigung';
+
+  // Prepare the options for the notification.
   const options = {
     body: data.body,
-    icon: data.icon || '/icon-192x192.png', // A default icon
-    badge: '/badge-72x72.png', // A default badge for Android
-    // Pass along data to the click event
+    icon: data.icon || 'https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-180x180.png',
+    badge: 'https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-180x180.png',
     data: {
-      url: data.url,
-      notificationId: data.notificationId,
+      url: data.url, // URL to open on click
+      notificationId: data.notificationId, // Custom ID for tracking
     }
   };
 
+  // Display the notification.
   event.waitUntil(
-    self.registration.showNotification(title, options)
+    self.registration.showNotification(data.title, options)
   );
 });
 
-self.addEventListener('notificationclick', function(event) {
+// This event listener is triggered when a user clicks on the notification.
+self.addEventListener('notificationclick', (event) => {
+  // Close the notification.
   event.notification.close();
 
-  const notificationData = event.notification.data;
-  if (!notificationData || !notificationData.url) {
-    // If no URL is provided, just open the app's root page.
-    event.waitUntil(clients.openWindow('/'));
-    return;
-  }
-  
-  // Construct the URL to open. We add a query parameter to track the click.
-  const urlToOpen = new URL(notificationData.url, self.location.origin);
-  urlToOpen.searchParams.set('notification_id', notificationData.notificationId);
+  const urlToOpen = new URL(event.notification.data.url, self.location.origin).href;
+  const notificationId = event.notification.data.notificationId;
 
-  // This code focuses an existing window or opens a new one.
-  event.waitUntil(
-    clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true
-    }).then(function(clientList) {
-      // If a window is already open, focus it.
-      if (clientList.length > 0) {
-        let client = clientList[0];
-        for (let i = 0; i < clientList.length; i++) {
-          if (clientList[i].focused) {
-            client = clientList[i];
-          }
-        }
-        // Navigate the existing window to the new URL and focus it.
-        return client.navigate(urlToOpen.href).then(cli => cli.focus());
+  // Append the notificationId to the URL to track the click in the app.
+  const urlWithParam = new URL(urlToOpen);
+  if (notificationId) {
+    urlWithParam.searchParams.append('notification_id', notificationId);
+  }
+
+  // Check if a window with the target URL is already open.
+  const promiseChain = clients.matchAll({
+    type: 'window',
+    includeUncontrolled: true
+  }).then((windowClients) => {
+    let matchingClient = null;
+
+    // Iterate through open windows to find a match.
+    for (let i = 0; i < windowClients.length; i++) {
+      const windowClient = windowClients[i];
+      // A more robust check would be to parse the URL and compare origins and paths.
+      if (new URL(windowClient.url).pathname === new URL(urlToOpen).pathname) {
+        matchingClient = windowClient;
+        break;
       }
-      // Otherwise, open a new window.
-      return clients.openWindow(urlToOpen.href);
-    })
-  );
+    }
+
+    // If a matching window is found, focus it. Otherwise, open a new window.
+    if (matchingClient) {
+      return matchingClient.focus();
+    } else {
+      return clients.openWindow(urlWithParam.href);
+    }
+  });
+
+  event.waitUntil(promiseChain);
+});
+
+// This event is triggered when the service worker is installed.
+self.addEventListener('install', (event) => {
+  // self.skipWaiting() forces the waiting service worker to become the
+  // active service worker. This is useful for getting the latest updates
+  // to the user faster.
+  self.skipWaiting();
+});
+
+// This event is triggered when the service worker is activated.
+self.addEventListener('activate', (event) => {
+  // event.waitUntil(clients.claim()) allows an active service worker to
+  // take control of all clients (open tabs/windows) that are in its scope.
+  event.waitUntil(clients.claim());
 });
