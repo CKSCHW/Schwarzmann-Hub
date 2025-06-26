@@ -36,7 +36,16 @@ Once the key is configured, you can get started by taking a look at `src/app/pag
 
 ## 📱 Testing Push Notifications Locally
 
-Push notifications require a secure context (**HTTPS**), which is not available by default when you access your local server from another device (like your phone) via an IP address. To solve this, we use `ngrok` to create a secure, public tunnel to your local server.
+Push notifications require a secure context (**HTTPS**). To test this locally from other devices (like your phone), we use `ngrok` to create a secure, public tunnel to your local server.
+
+### First-Time Setup for `ngrok` (One-Time Only)
+
+`ngrok` requires a free account and an "authtoken" to work. This is a quick, one-time setup.
+
+1.  **Sign Up:** Go to the `ngrok` dashboard and create a free account: [https://dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup)
+2.  **Get Your Authtoken:** After signing up, go to the "Your Authtoken" section of the dashboard: [https://dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken)
+3.  **Copy the `ngrok config add-authtoken ...` command** provided on that page. It will look like this: `ngrok config add-authtoken <YOUR_TOKEN>`
+4.  **Run the command** in your terminal. This saves your token to a local configuration file, so you only have to do this once per machine.
 
 ### How to Use It
 
