@@ -50,12 +50,12 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       <section aria-labelledby="dashboard-welcome-title">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-card border">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-primary text-primary-foreground">
           <div>
             <h1 id="dashboard-welcome-title" className="text-2xl font-headline font-semibold">
               Willkommen zurück!
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-primary-foreground/90">
               Ihre zentrale Anlaufstelle für Neuigkeiten, Pläne und Termine.
             </p>
           </div>
