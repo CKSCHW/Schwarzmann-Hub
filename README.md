@@ -25,10 +25,32 @@ This application uses Firebase for server-side features and requires a **Service
     ```
     FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "...", ...}'
     ```
-5.  **Restart Your Server:** If the server is running, you must stop it (`Ctrl+C`) and restart it (`npm run dev`) for the changes to take effect.
+5.  **VAPID Keys:** For push notifications, you also need to generate and add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` to this file. See `deployment-notes.md` for instructions.
+6.  **Restart Your Server:** If the server is running, you must stop it (`Ctrl+C`) and restart it (`npm run dev`) for the changes to take effect.
 
 If you don't do this, the app will show a `CRITICAL CONFIGURATION ERROR` and will not start. **This is a security feature, not a code bug.**
 
 ## 🚀 Getting Started
 
 Once the key is configured, you can get started by taking a look at `src/app/page.tsx`.
+
+## 📱 Testing Push Notifications Locally
+
+Push notifications require a secure context (**HTTPS**), which is not available by default when you access your local server from another device (like your phone) via an IP address. To solve this, we use `ngrok` to create a secure, public tunnel to your local server.
+
+### How to Use It
+
+1.  **Start the development server** in your first terminal window, as usual:
+    ```bash
+    npm run dev
+    ```
+    This makes your app available on your local machine at `http://localhost:3000`.
+
+2.  **Start the secure tunnel** in a **second, separate terminal window**:
+    ```bash
+    npm run dev:public
+    ```
+
+3.  `ngrok` will give you a public URL that looks something like `https://random-string.ngrok-free.app`.
+
+4.  **Use this `https://...` URL** to open the app on your phone or in any browser. Because this connection is secure, you will be able to test the entire push notification workflow, including subscribing and receiving test notifications.
