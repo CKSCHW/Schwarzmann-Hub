@@ -21,7 +21,6 @@ import { questionTypes } from '@/types';
 import { createSurvey, deleteSurvey, getSurveyResults } from '@/actions/surveyActions';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { randomUUID } from 'crypto';
 
 const surveySchema = z.object({
   title: z.string().min(5, 'Titel muss mindestens 5 Zeichen haben.'),
@@ -83,6 +82,44 @@ const QuestionOptionsFieldArray = ({ control, questionIndex }: { control: any, q
     );
 }
 
+// Sub-component for a single question to isolate hook usage
+const SurveyQuestionItem = ({ control, index, remove, fieldsLength }: { control: any, index: number, remove: (index: number) => void, fieldsLength: number }) => {
+    const questionType = useWatch({ control, name: `questions.${index}.type` });
+
+    return (
+        <div className="p-4 border rounded-lg space-y-2 bg-muted/30">
+            <div className="flex items-start gap-2">
+                <GripVertical className="h-5 w-5 mt-2 text-muted-foreground" />
+                <div className="flex-grow space-y-2">
+                    <FormField control={control} name={`questions.${index}.text`} render={({ field }) => (
+                        <FormItem><FormLabel>Frage {index + 1}</FormLabel><FormControl><Textarea {...field} placeholder={`Fragentext...`} rows={2} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                    <Controller
+                        control={control}
+                        name={`questions.${index}.type`}
+                        render={({ field }) => (
+                            <FormItem><FormLabel>Fragetyp</FormLabel>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger><SelectValue placeholder="Typ auswählen..." /></SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="rating">Bewertung (1-5 Sterne)</SelectItem>
+                                        <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
+                                        <SelectItem value="text">Textantwort</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage /></FormItem>
+                        )} />
+                </div>
+                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fieldsLength <= 1}><Trash2 className="h-4 w-4" /></Button>
+            </div>
+            {questionType === 'multiple-choice' && <QuestionOptionsFieldArray control={control} questionIndex={index} />}
+        </div>
+    );
+};
+
+
 export default function SurveyManager({ initialSurveys, allUsers, currentUser }: SurveyManagerProps) {
   const [surveys, setSurveys] = useState(initialSurveys);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,7 +133,7 @@ export default function SurveyManager({ initialSurveys, allUsers, currentUser }:
     defaultValues: {
       title: '',
       description: '',
-      questions: [{ id: `q-${Date.now()}`, text: '', type: 'rating', options: [] }],
+      questions: [{ id: `q-${Date.now()}`, text: '', type: 'rating', options: [{text: ''}, {text: ''}] }],
       assignedUserIds: [],
     },
   });
@@ -238,41 +275,17 @@ export default function SurveyManager({ initialSurveys, allUsers, currentUser }:
                 <div>
                     <FormLabel>Fragen</FormLabel>
                     <div className="space-y-4 mt-2">
-                    {fields.map((field, index) => {
-                        const questionType = useWatch({ control: form.control, name: `questions.${index}.type` });
-                        return (
-                        <div key={field.id} className="p-4 border rounded-lg space-y-2 bg-muted/30">
-                            <div className="flex items-start gap-2">
-                                <GripVertical className="h-5 w-5 mt-2 text-muted-foreground" />
-                                <div className="flex-grow space-y-2">
-                                    <FormField control={form.control} name={`questions.${index}.text`} render={({ field }) => (
-                                        <FormItem><FormLabel>Frage {index+1}</FormLabel><FormControl><Textarea {...field} placeholder={`Fragentext...`} rows={2} /></FormControl><FormMessage /></FormItem>
-                                    )} />
-                                     <Controller
-                                        control={form.control}
-                                        name={`questions.${index}.type`}
-                                        render={({ field }) => (
-                                        <FormItem><FormLabel>Fragetyp</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger><SelectValue placeholder="Typ auswählen..." /></SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="rating">Bewertung (1-5 Sterne)</SelectItem>
-                                                    <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                                                    <SelectItem value="text">Textantwort</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        <FormMessage /></FormItem>
-                                    )}/>
-                                </div>
-                                <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length <= 1}><Trash2 className="h-4 w-4" /></Button>
-                            </div>
-                            {questionType === 'multiple-choice' && <QuestionOptionsFieldArray control={form.control} questionIndex={index} />}
-                        </div>
-                    )})}
+                    {fields.map((field, index) => (
+                       <SurveyQuestionItem
+                            key={field.id}
+                            control={form.control}
+                            index={index}
+                            remove={remove}
+                            fieldsLength={fields.length}
+                        />
+                    ))}
                     </div>
-                    <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `q-${Date.now()}`, text: '', type: 'rating', options: [] })} className="mt-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `q-${Date.now()}`, text: '', type: 'rating', options: [{text: ''}, {text: ''}] })} className="mt-2">
                         <PlusCircle className="mr-2 h-4 w-4" /> Frage hinzufügen
                     </Button>
                 </div>
