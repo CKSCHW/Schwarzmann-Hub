@@ -8,6 +8,7 @@ import { getArticles } from "@/actions/newsActions";
 import { getSchedules } from "@/actions/scheduleActions";
 import type { NewsArticle } from "@/types";
 import NewsCard from "@/components/NewsCard";
+import { getCurrentUser } from "@/lib/firebase-admin";
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +26,7 @@ function deduplicateArticles(articles: NewsArticle[]): NewsArticle[] {
 const quickAccessItems = [
   {
     title: "Alle News anzeigen",
-    description: "Lesen Sie alle Unternehmensankündigungen und Updates.",
+    description: "Lies alle Unternehmensankündigungen und Updates.",
     icon: Newspaper,
     href: "/news",
     cta: "Zu den News",
@@ -33,15 +34,18 @@ const quickAccessItems = [
 ];
 
 export default async function DashboardPage() {
-  const [appointments, allArticlesFromDb, schedules] = await Promise.all([
+  const [appointments, allArticlesFromDb, schedules, user] = await Promise.all([
     getAppointmentsForUser(),
     getArticles({ limit: 1 }),
     getSchedules(),
+    getCurrentUser(),
   ]);
   
   const allArticles = deduplicateArticles(allArticlesFromDb);
   const latestArticle = allArticles[0];
   const latestSchedule = schedules?.[0];
+
+  const welcomeName = user?.firstName ? user.firstName : 'zurück';
 
   return (
     <div className="space-y-8">
@@ -49,10 +53,10 @@ export default async function DashboardPage() {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 rounded-lg bg-primary text-primary-foreground">
           <div>
             <h1 id="dashboard-welcome-title" className="text-2xl font-headline font-semibold">
-              Willkommen zurück!
+              Willkommen {welcomeName}!
             </h1>
             <p className="text-primary-foreground/90">
-              Ihre zentrale Anlaufstelle für Neuigkeiten, Pläne und Termine.
+              Deine zentrale Anlaufstelle für Neuigkeiten, Pläne und Termine.
             </p>
           </div>
         </div>
@@ -141,8 +145,8 @@ export default async function DashboardPage() {
       <section aria-labelledby="upcoming-events-title">
          <Card>
             <CardHeader>
-                <CardTitle className="text-xl font-headline">Ihre anstehenden Termine</CardTitle>
-                <CardDescription>Für Sie und Ihre Gruppen relevante Termine.</CardDescription>
+                <CardTitle className="text-xl font-headline">Deine anstehenden Termine</CardTitle>
+                <CardDescription>Für dich und deine Gruppen relevante Termine.</CardDescription>
             </CardHeader>
             <CardContent>
                 {appointments.length > 0 ? (
@@ -168,7 +172,7 @@ export default async function DashboardPage() {
                   </ul>
                 ) : (
                   <p className="text-center text-muted-foreground py-4">
-                      Für Sie sind aktuell keine Termine eingetragen.
+                      Für dich sind aktuell keine Termine eingetragen.
                   </p>
                 )}
             </CardContent>

@@ -41,6 +41,11 @@ export async function getCurrentUser(): Promise<SimpleUser | null> {
   try {
     const decodedIdToken = await adminAuth.verifySessionCookie(sessionCookie.value, true);
     
+    // Fetch additional profile data from Firestore
+    const userDocRef = adminDb.collection('users').doc(decodedIdToken.uid);
+    const userDoc = await userDocRef.get();
+    const profileData = userDoc.exists ? userDoc.data() : {};
+
     // Create a plain, serializable user object from the token claims.
     // This avoids passing complex, server-only objects to components.
     const user: SimpleUser = {
@@ -50,6 +55,10 @@ export async function getCurrentUser(): Promise<SimpleUser | null> {
       photoURL: decodedIdToken.picture,
       isAdmin: decodedIdToken.role === 'admin',
       groups: decodedIdToken.groups || [],
+      // Add data from firestore
+      firstName: profileData?.firstName,
+      lastName: profileData?.lastName,
+      title: profileData?.title,
     };
     return user;
 

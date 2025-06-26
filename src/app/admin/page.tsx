@@ -68,7 +68,7 @@ export default async function AdminPage() {
       <section>
         <h1 className="text-3xl font-headline font-semibold mb-2">Verwaltung</h1>
         <p className="text-muted-foreground">
-          Hier können Sie Inhalte der App verwalten.
+          Hier kannst du Inhalte der App verwalten.
         </p>
       </section>
 
@@ -84,7 +84,7 @@ export default async function AdminPage() {
             <AdminDashboardClient
               initialArticles={articles}
               initialReceipts={receipts}
-              adminEmail={user.email!}
+              adminDisplayName={user.displayName || user.email!}
             />
           </TabsContent>
         )}
@@ -105,8 +105,6 @@ export default async function AdminPage() {
             <TabsContent value="surveys" className="mt-6">
                 <SurveyManager 
                     initialSurveys={surveys}
-                    allUsers={usersWithGroups}
-                    currentUser={user}
                 />
             </TabsContent>
         )}

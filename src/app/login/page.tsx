@@ -60,7 +60,7 @@ export default function LoginPage() {
       console.error("Error setting up reCAPTCHA", error);
       toast({
         title: "Sicherheits-Check Fehler",
-        description: "Das reCAPTCHA konnte nicht initialisiert werden. Bitte laden Sie die Seite neu.",
+        description: "Das reCAPTCHA konnte nicht initialisiert werden. Bitte lade die Seite neu.",
         variant: "destructive"
       });
     }
@@ -78,7 +78,7 @@ export default function LoginPage() {
     } catch (error: any) {
       toast({
         title: 'Anmeldefehler',
-        description: 'E-Mail oder Passwort ist falsch. Bitte versuchen Sie es erneut.',
+        description: 'E-Mail oder Passwort ist falsch. Bitte versuche es erneut.',
         variant: 'destructive',
       });
       console.error('Login error:', error);
@@ -90,7 +90,7 @@ export default function LoginPage() {
   const handlePhoneLoginSendCode = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!phoneNumber) {
-        toast({ title: "Fehlende Angabe", description: "Bitte geben Sie eine Telefonnummer ein." });
+        toast({ title: "Fehlende Angabe", description: "Bitte gib eine Telefonnummer ein." });
         return;
       }
       setIsLoading(true);
@@ -111,13 +111,13 @@ export default function LoginPage() {
         console.error("SMS send error:", error);
 
         // Provide more specific feedback based on the error code
-        let description = 'Der Code konnte nicht gesendet werden. Bitte prüfen Sie die Nummer und versuchen Sie es erneut.';
+        let description = 'Der Code konnte nicht gesendet werden. Bitte prüfe die Nummer und versuche es erneut.';
         if (error.code === 'auth/invalid-phone-number') {
-            description = 'Die angegebene Telefonnummer ist ungültig. Bitte verwenden Sie das internationale Format (z.B. +43...).';
+            description = 'Die angegebene Telefonnummer ist ungültig. Bitte verwende das internationale Format (z.B. +43...).';
         } else if (error.code === 'auth/too-many-requests') {
-            description = 'Zu viele Anfragen gesendet. Bitte versuchen Sie es später erneut.';
+            description = 'Zu viele Anfragen gesendet. Bitte versuche es später erneut.';
         } else if (error.code === 'auth/captcha-check-failed' || error.code === 'auth/web-storage-unsupported') {
-            description = 'Die Sicherheitsüberprüfung ist fehlgeschlagen. Bitte laden Sie die Seite neu und versuchen Sie es erneut.';
+            description = 'Die Sicherheitsüberprüfung ist fehlgeschlagen. Bitte lade die Seite neu und versuche es erneut.';
         }
 
         toast({
@@ -144,7 +144,7 @@ export default function LoginPage() {
          console.error("Code verification error:", error);
          toast({
           title: 'Ungültiger Code',
-          description: 'Der eingegebene Code ist falsch. Bitte versuchen Sie es erneut.',
+          description: 'Der eingegebene Code ist falsch. Bitte versuche es erneut.',
           variant: 'destructive',
         });
       } finally {
@@ -168,7 +168,7 @@ export default function LoginPage() {
             <TabsContent value="email">
                 <CardHeader className="space-y-1 text-center">
                   <CardTitle className="text-2xl">Anmelden</CardTitle>
-                  <CardDescription>Geben Sie Ihre E-Mail & Passwort ein.</CardDescription>
+                  <CardDescription>Gib deine E-Mail & dein Passwort ein.</CardDescription>
                 </CardHeader>
                 <form onSubmit={handleEmailLogin}>
                   <CardContent className="space-y-4">
@@ -207,7 +207,7 @@ export default function LoginPage() {
             <TabsContent value="phone">
                  <CardHeader className="space-y-1 text-center">
                   <CardTitle className="text-2xl">Anmelden</CardTitle>
-                  <CardDescription>Nutzen Sie Ihre Telefonnummer.</CardDescription>
+                  <CardDescription>Nutze deine Telefonnummer.</CardDescription>
                 </CardHeader>
                 {!isCodeSent ? (
                     <form onSubmit={handlePhoneLoginSendCode}>
@@ -268,7 +268,7 @@ export default function LoginPage() {
         <div id="recaptcha-container"></div>
 
         <p className="px-8 text-center text-sm text-muted-foreground">
-            Bitte verwenden Sie die vom Unternehmen bereitgestellten Anmeldedaten.
+            Bitte verwende die vom Unternehmen bereitgestellten Anmeldedaten.
         </p>
       </div>
     </div>

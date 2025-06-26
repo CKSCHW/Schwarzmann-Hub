@@ -11,7 +11,7 @@ import path from 'path';
 async function verifyAdmin() {
     const user = await getCurrentUser();
     if (!user || user.isAdmin !== true) {
-        throw new Error('Unauthorized');
+        throw new Error('Nicht autorisiert');
     }
     return user;
 }
@@ -27,7 +27,7 @@ export async function uploadSchedule(formData: FormData): Promise<{ success: boo
         const file = formData.get('file') as File;
 
         if (!file || file.size === 0) {
-            return { success: false, message: 'Bitte wählen Sie eine Datei aus.' };
+            return { success: false, message: 'Bitte wähle eine Datei aus.' };
         }
 
         if (file.type !== 'application/pdf') {
@@ -124,18 +124,19 @@ export async function getScheduleDownloadReceipts(): Promise<ScheduleDownloadRec
     if (userIds.length === 0) {
         return [];
     }
-
+    
+    // Fetch all users in one go
     const userRecords = await adminAuth.getUsers(userIds.map(uid => ({ uid })));
     
-    const userMap = new Map(userRecords.users.map(u => {
-        const simpleUser: SimpleUser = {
+    const userMap = new Map<string, SimpleUser>();
+    userRecords.users.forEach(u => {
+        userMap.set(u.uid, {
             uid: u.uid,
             email: u.email,
             displayName: u.displayName,
             photoURL: u.photoURL,
-        };
-        return [u.uid, simpleUser];
-    }));
+        });
+    });
 
     const receiptsWithUsers: ScheduleDownloadReceiptWithUser[] = receiptsData.map(receipt => ({
         ...receipt,

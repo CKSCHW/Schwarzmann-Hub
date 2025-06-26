@@ -15,15 +15,15 @@ export default async function SurveysPage() {
         return (
             <div className="space-y-8">
                 <section>
-                    <h1 className="text-3xl font-headline font-semibold mb-2">Ihre Umfragen</h1>
+                    <h1 className="text-3xl font-headline font-semibold mb-2">Deine Umfragen</h1>
                     <p className="text-muted-foreground">
-                        Hier finden Sie Umfragen, zu denen Sie eingeladen wurden. Ihre Antworten sind anonym.
+                        Hier findest du Umfragen, zu denen du eingeladen wurdest. Deine Antworten sind anonym.
                     </p>
                 </section>
                 <div className="text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
                     <ClipboardList className="mx-auto h-12 w-12 text-muted-foreground" />
                     <h3 className="mt-2 text-lg font-medium">Keine Umfragen verfügbar</h3>
-                    <p className="mt-1 text-sm">Für Sie sind im Moment keine Umfragen zugewiesen.</p>
+                    <p className="mt-1 text-sm">Für dich sind im Moment keine Umfragen zugewiesen.</p>
                 </div>
             </div>
         );
@@ -36,9 +36,9 @@ export default async function SurveysPage() {
     return (
         <div className="space-y-8">
             <section>
-                <h1 className="text-3xl font-headline font-semibold mb-2">Ihre Umfragen</h1>
+                <h1 className="text-3xl font-headline font-semibold mb-2">Deine Umfragen</h1>
                 <p className="text-muted-foreground">
-                    Hier finden Sie Umfragen, zu denen Sie eingeladen wurden. Ihre Antworten sind anonym.
+                    Hier findest du Umfragen, zu denen du eingeladen wurdest. Deine Antworten sind anonym.
                 </p>
             </section>
 
@@ -75,7 +75,7 @@ export default async function SurveysPage() {
                     <div className="text-center text-muted-foreground py-10 border-2 border-dashed rounded-lg">
                         <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
                         <h3 className="mt-2 text-lg font-medium">Alles erledigt!</h3>
-                        <p className="mt-1 text-sm">Sie haben aktuell keine offenen Umfragen.</p>
+                        <p className="mt-1 text-sm">Du hast aktuell keine offenen Umfragen.</p>
                     </div>
                 )}
             </section>
@@ -103,7 +103,7 @@ export default async function SurveysPage() {
                         ))}
                     </div>
                 ) : (
-                    <p className="text-sm text-muted-foreground">Sie haben noch an keiner Umfrage teilgenommen.</p>
+                    <p className="text-sm text-muted-foreground">Du hast noch an keiner Umfrage teilgenommen.</p>
                 )}
             </section>
         </div>

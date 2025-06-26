@@ -204,7 +204,7 @@ export async function importWordPressArticles() {
 async function verifyAdmin() {
     const user = await getCurrentUser();
     if (!user || user.isAdmin !== true) {
-        throw new Error('Unauthorized');
+        throw new Error('Nicht autorisiert');
     }
 }
 
@@ -245,7 +245,7 @@ export async function deleteArticle(articleId: string) {
     
     const articleDoc = await articleRef.get();
     if (!articleDoc.exists || articleDoc.data()?.source !== 'internal') {
-        throw new Error('This article cannot be deleted.');
+        throw new Error('Dieser Artikel kann nicht gelöscht werden.');
     }
 
     const batch = adminDb.batch();
@@ -270,6 +270,7 @@ export async function deleteArticle(articleId: string) {
 
 // Action to get articles with their read counts for the admin dashboard
 export async function getNewsArticlesWithReadCounts() {
+    await verifyAdmin();
     const articlesSnapshot = await adminDb.collection('articles').orderBy('date', 'desc').get();
     const articles: NewsArticle[] = articlesSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -342,8 +343,16 @@ export async function deleteAppointment(id: string): Promise<void> {
 // USER & GROUP MANAGEMENT
 export async function getUsersWithGroups(): Promise<SimpleUser[]> {
   const listUsersResult = await adminAuth.listUsers();
+  const usersCollection = await adminDb.collection('users').get();
+  
+  const profilesMap = new Map<string, any>();
+  usersCollection.docs.forEach(doc => {
+      profilesMap.set(doc.id, doc.data());
+  });
+
   const users: SimpleUser[] = listUsersResult.users.map(userRecord => {
     const customClaims = (userRecord.customClaims || {}) as { role?: string; groups?: UserGroup[] };
+    const profile = profilesMap.get(userRecord.uid) || {};
     return {
       uid: userRecord.uid,
       email: userRecord.email,
@@ -351,6 +360,9 @@ export async function getUsersWithGroups(): Promise<SimpleUser[]> {
       photoURL: userRecord.photoURL,
       isAdmin: customClaims.role === 'admin',
       groups: customClaims.groups || [],
+      firstName: profile.firstName,
+      lastName: profile.lastName,
+      title: profile.title,
     };
   });
   return users;

@@ -7,7 +7,7 @@ import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'Elektro Schwarzmann',
-  description: 'Interne App für News und Wocheneinteilungen von Elektro Schwarzmann.',
+  description: 'Deine interne App für News und Wocheneinteilungen von Elektro Schwarzmann.',
   applicationName: "Elektro Schwarzmann",
   appleWebApp: {
     capable: true,

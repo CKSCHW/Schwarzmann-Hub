@@ -23,7 +23,7 @@ const articleSchema = z.object({
   title: z.string().min(5, 'Der Titel muss mindestens 5 Zeichen lang sein.'),
   snippet: z.string().min(10, 'Die Kurzbeschreibung muss mindestens 10 Zeichen lang sein.'),
   content: z.string().optional(),
-  imageUrl: z.string().url('Bitte geben Sie eine gültige Bild-URL ein.').optional().or(z.literal('')),
+  imageUrl: z.string().url('Bitte gib eine gültige Bild-URL ein.').optional().or(z.literal('')),
   author: z.string().optional(),
 });
 
@@ -32,13 +32,13 @@ type ArticleFormValues = z.infer<typeof articleSchema>;
 type AdminDashboardClientProps = {
   initialArticles: NewsArticle[];
   initialReceipts: ReadReceiptWithUser[];
-  adminEmail: string;
+  adminDisplayName: string;
 };
 
 export default function AdminDashboardClient({
   initialArticles,
   initialReceipts,
-  adminEmail,
+  adminDisplayName,
 }: AdminDashboardClientProps) {
   const [articles, setArticles] = useState<NewsArticle[]>(initialArticles);
   const [receipts, setReceipts] = useState<ReadReceiptWithUser[]>(initialReceipts);
@@ -174,7 +174,7 @@ export default function AdminDashboardClient({
                 Neuen internen Artikel erstellen
               </CardTitle>
               <CardDescription>
-                Veröffentlichen Sie hier neue unternehmensinterne News.
+                Veröffentliche hier neue unternehmensinterne News.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -251,7 +251,7 @@ export default function AdminDashboardClient({
                     Webseiten-Import
                 </CardTitle>
                 <CardDescription>
-                    Importieren und aktualisieren Sie die neuesten Beiträge von den öffentlichen Unternehmenswebseiten.
+                    Importiere und aktualisiere die neuesten Beiträge von den öffentlichen Unternehmenswebseiten.
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -275,7 +275,7 @@ export default function AdminDashboardClient({
                 Benachrichtigungen testen
               </CardTitle>
               <CardDescription>
-                Senden Sie eine Test-Benachrichtigung an alle abonnierten Geräte, um die Funktion zu prüfen.
+                Sende eine Test-Benachrichtigung an alle abonnierten Geräte, um die Funktion zu prüfen.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -295,9 +295,9 @@ export default function AdminDashboardClient({
                   <CardDescription>Angemeldet als Admin:</CardDescription>
               </CardHeader>
               <CardContent>
-                  <p className="font-mono text-sm">{adminEmail}</p>
+                  <p className="font-mono text-sm">{adminDisplayName}</p>
                    <p className="text-xs text-muted-foreground mt-4">
-                      Nur Benutzer mit der `admin`-Rolle können diese Seite sehen. Sie können Rollen über Firebase Admin SDK (Custom Claims) vergeben.
+                      Nur Benutzer mit der `admin`-Rolle können diese Seite sehen. Du kannst Rollen über das Firebase Admin SDK (Custom Claims) vergeben.
                    </p>
               </CardContent>
            </Card>
@@ -311,7 +311,7 @@ export default function AdminDashboardClient({
             Lesestatistiken
           </CardTitle>
           <CardDescription>
-            Hier sehen Sie, wer welche Artikel gelesen hat. Interne Artikel können hier gelöscht werden.
+            Hier siehst du, wer welche Artikel gelesen hat. Interne Artikel können hier gelöscht werden.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -339,7 +339,7 @@ export default function AdminDashboardClient({
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
+                                <AlertDialogTitle>Bist du sicher?</AlertDialogTitle>
                                 <AlertDialogDescription>
                                   Diese Aktion kann nicht rückgängig gemacht werden. Der Artikel und alle zugehörigen Lesestatistiken werden dauerhaft gelöscht.
                                 </AlertDialogDescription>
@@ -368,14 +368,14 @@ export default function AdminDashboardClient({
                        <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead>Mitarbeiter (E-Mail)</TableHead>
+                            <TableHead>Mitarbeiter</TableHead>
                             <TableHead>Gelesen am</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {articleReceipts.map(receipt => (
                             <TableRow key={receipt.id}>
-                              <TableCell>{receipt.user?.email ?? 'Unbekannt'}</TableCell>
+                              <TableCell>{receipt.user?.displayName || receipt.user?.email || 'Unbekannt'}</TableCell>
                               <TableCell>{new Date(receipt.readAt).toLocaleString('de-DE')}</TableCell>
                             </TableRow>
                           ))}
@@ -392,7 +392,7 @@ export default function AdminDashboardClient({
             }) : (
                 <div className="text-center text-muted-foreground py-8">
                     <p>Keine Artikel in der Datenbank gefunden.</p>
-                    <p className="text-sm mt-2">Bitte importieren Sie die Artikel im Admin-Bereich.</p>
+                    <p className="text-sm mt-2">Bitte importiere die Artikel im Admin-Bereich.</p>
                 </div>
             )}
           </Accordion>

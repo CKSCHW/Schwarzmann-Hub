@@ -53,7 +53,7 @@ export default function SurveyManager({ initialSurveys }: SurveyManagerProps) {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
             <CardTitle>Umfragen verwalten</CardTitle>
-            <CardDescription>Verwalten Sie Ihre Umfragen und sehen Sie die Ergebnisse ein.</CardDescription>
+            <CardDescription>Verwalte deine Umfragen und sieh die Ergebnisse ein.</CardDescription>
         </div>
         <Button asChild>
             <Link href="/admin/surveys/create">
@@ -106,7 +106,7 @@ export default function SurveyManager({ initialSurveys }: SurveyManagerProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center h-24">Sie haben noch keine Umfragen erstellt.</TableCell>
+                <TableCell colSpan={4} className="text-center h-24">Du hast noch keine Umfragen erstellt.</TableCell>
               </TableRow>
             )}
           </TableBody>

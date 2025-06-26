@@ -28,7 +28,7 @@ export async function createSurvey(surveyData: Omit<Survey, 'id' | 'createdAt' |
         // Ensure every question has a unique ID
         questions: surveyData.questions.map(q => ({ ...q, id: q.id || randomUUID() })),
         createdBy: user.uid,
-        creatorEmail: user.email || 'Unbekannt',
+        creatorEmail: user.displayName || user.email || 'Unbekannt',
         createdAt: new Date().toISOString(),
         completionCount: 0,
     };
@@ -41,8 +41,8 @@ export async function createSurvey(surveyData: Omit<Survey, 'id' | 'createdAt' |
         await sendPushNotificationToUsers(
             newSurvey.assignedUserIds,
             {
-                title: 'Neue Umfrage für Sie',
-                body: `Sie wurden zur Umfrage "${newSurvey.title}" eingeladen.`,
+                title: 'Neue Umfrage für dich',
+                body: `Du wurdest zur Umfrage "${newSurvey.title}" eingeladen.`,
                 url: `/surveys/${newSurvey.id}`,
             }
         );
@@ -64,7 +64,7 @@ export async function updateSurvey(surveyId: string, surveyData: Omit<Survey, 'i
 
     const existingSurvey = surveyDoc.data() as Survey;
     if (existingSurvey.createdBy !== user.uid && !user.isAdmin) {
-        throw new Error("Sie sind nicht berechtigt, diese Umfrage zu bearbeiten.");
+        throw new Error("Du bist nicht berechtigt, diese Umfrage zu bearbeiten.");
     }
     
     // Some fields should not be overwritten by an update
@@ -94,7 +94,7 @@ export async function deleteSurvey(surveyId: string): Promise<void> {
         throw new Error("Umfrage nicht gefunden.");
     }
     if (surveyDoc.data()?.createdBy !== user.uid && !user.isAdmin) {
-        throw new Error("Sie können nur Ihre eigenen Umfragen löschen.");
+        throw new Error("Du kannst nur deine eigenen Umfragen löschen.");
     }
 
     // In a real app, you might want to delete associated responses and completions too.
@@ -120,7 +120,7 @@ export async function duplicateSurvey(surveyId: string): Promise<Survey> {
         assignedUserIds: [], // Reset participants
         completionCount: 0, // Reset completion count
         createdBy: user.uid,
-        creatorEmail: user.email || 'Unbekannt',
+        creatorEmail: user.displayName || user.email || 'Unbekannt',
         createdAt: new Date().toISOString(),
     };
 
@@ -187,7 +187,7 @@ export async function getSurveyById(surveyId: string): Promise<Survey | null> {
 
     const survey = { id: surveyDoc.id, ...surveyDoc.data() } as Survey;
     if (!survey.assignedUserIds.includes(user.uid) && !user.isAdmin) {
-        throw new Error("Sie sind nicht für diese Umfrage berechtigt.");
+        throw new Error("Du bist nicht für diese Umfrage berechtigt.");
     }
 
     return survey;
@@ -204,7 +204,7 @@ export async function getSurveyForEditing(surveyId: string): Promise<Survey | nu
     const survey = { id: surveyDoc.id, ...surveyDoc.data() } as Survey;
     // Security check: only creator or admin can edit
     if (survey.createdBy !== user.uid && !user.isAdmin) {
-        throw new Error("Sie sind nicht berechtigt, diese Umfrage zu bearbeiten.");
+        throw new Error("Du bist nicht berechtigt, diese Umfrage zu bearbeiten.");
     }
     
     return survey;
@@ -227,7 +227,7 @@ export async function submitSurveyResponse(
     await adminDb.runTransaction(async (transaction) => {
       const completionDoc = await transaction.get(completionRef);
       if (completionDoc.exists) {
-        throw new Error('Sie haben bereits an dieser Umfrage teilgenommen.');
+        throw new Error('Du hast bereits an dieser Umfrage teilgenommen.');
       }
       
       const surveyDoc = await transaction.get(surveyRef);
@@ -236,7 +236,7 @@ export async function submitSurveyResponse(
       }
       const surveyData = surveyDoc.data() as Survey;
       if (!surveyData.assignedUserIds.includes(user.uid) && !user.isAdmin) {
-          throw new Error('Sie sind nicht für diese Umfrage berechtigt.');
+          throw new Error('Du bist für diese Umfrage nicht berechtigt.');
       }
 
       // 1. Save the anonymous response
@@ -263,7 +263,7 @@ export async function submitSurveyResponse(
     });
 
     revalidatePath('/surveys');
-    return { success: true, message: 'Ihre Antwort wurde anonym übermittelt. Vielen Dank!' };
+    return { success: true, message: 'Deine Antwort wurde anonym übermittelt. Vielen Dank!' };
   } catch (error: any) {
     console.error("Survey submission error:", error);
     return { success: false, message: error.message || 'Ein Fehler ist aufgetreten.' };
@@ -278,7 +278,7 @@ export async function getSurveyResults(surveyId: string): Promise<SurveyResult |
     
     const survey = { id: surveyDoc.id, ...surveyDoc.data() } as Survey;
     if (survey.createdBy !== user.uid && !user.isAdmin) {
-        throw new Error("Sie können nur Ergebnisse für Ihre eigenen Umfragen einsehen.");
+        throw new Error("Du kannst nur Ergebnisse für deine eigenen Umfragen einsehen.");
     }
     
     const responsesSnapshot = await adminDb.collection('surveyResponses').where('surveyId', '==', surveyId).get();

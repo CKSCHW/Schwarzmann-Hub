@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -53,7 +53,7 @@ export default function UserGroupManager({ initialUsers }: UserGroupManagerProps
       setUsers(users.map(u => u.uid === selectedUser.uid ? { ...u, groups: selectedGroups } : u));
       toast({
         title: 'Erfolgreich gespeichert',
-        description: `Die Gruppen für ${selectedUser.email} wurden aktualisiert.`,
+        description: `Die Gruppen für ${selectedUser.displayName || selectedUser.email} wurden aktualisiert.`,
       });
       handleCloseDialog();
     } catch (error) {
@@ -75,14 +75,14 @@ export default function UserGroupManager({ initialUsers }: UserGroupManagerProps
           Benutzergruppen verwalten
         </CardTitle>
         <CardDescription>
-          Weisen Sie hier den Benutzern Gruppen zu, um den Zugriff auf Termine zu steuern.
+          Weise hier den Benutzern Gruppen zu, um den Zugriff auf Termine und andere Inhalte zu steuern.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Benutzer (E-Mail)</TableHead>
+              <TableHead>Benutzer</TableHead>
               <TableHead>Zugeordnete Gruppen</TableHead>
               <TableHead className="text-right">Aktion</TableHead>
             </TableRow>
@@ -90,7 +90,10 @@ export default function UserGroupManager({ initialUsers }: UserGroupManagerProps
           <TableBody>
             {users.map(user => (
               <TableRow key={user.uid}>
-                <TableCell className="font-medium">{user.email}</TableCell>
+                <TableCell className="font-medium">
+                  <div>{user.displayName || user.email}</div>
+                  <div className="text-xs text-muted-foreground">{user.email}</div>
+                </TableCell>
                 <TableCell>
                   <div className="flex flex-wrap gap-1">
                     {user.isAdmin && <Badge variant="destructive">Admin</Badge>}
@@ -118,9 +121,9 @@ export default function UserGroupManager({ initialUsers }: UserGroupManagerProps
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Gruppen für {selectedUser.email}</DialogTitle>
+                        <DialogTitle>Gruppen für {selectedUser.displayName || selectedUser.email}</DialogTitle>
                         <DialogDescription>
-                        Wählen Sie die Gruppen aus, denen dieser Benutzer angehören soll.
+                        Wähle die Gruppen aus, denen dieser Benutzer angehören soll.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid grid-cols-2 gap-4 py-4">

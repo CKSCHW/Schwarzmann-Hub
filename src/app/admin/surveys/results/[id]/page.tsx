@@ -1,3 +1,4 @@
+
 import { getSurveyResults } from "@/actions/surveyActions";
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from "@/lib/firebase-admin";
@@ -10,7 +11,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function SurveyResultsPage({ params }: { params: { id: string } }) {
     const user = await getCurrentUser();
-    const isSurveyManager = user?.isAdmin || user?.groups?.includes('Projektleiter') || user?.groups?.includes('Schulungsleiter');
+    if (!user) {
+        redirect('/login');
+    }
+    const isSurveyManager = user.isAdmin || user.groups?.includes('Projektleiter') || user.groups?.includes('Schulungsleiter');
     if (!isSurveyManager) {
         redirect('/');
     }

@@ -11,7 +11,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function CreateSurveyPage() {
     const user = await getCurrentUser();
-    const isSurveyManager = user?.isAdmin || user?.groups?.includes('Projektleiter') || user?.groups?.includes('Schulungsleiter');
+    if (!user) {
+        redirect('/login');
+    }
+    const isSurveyManager = user.isAdmin || user.groups?.includes('Projektleiter') || user.groups?.includes('Schulungsleiter');
     if (!isSurveyManager) {
         redirect('/');
     }
@@ -28,7 +31,7 @@ export default async function CreateSurveyPage() {
             </Button>
             <header className="mb-6 mt-4">
                 <h1 className="text-3xl font-bold">Neue Umfrage erstellen</h1>
-                <p className="text-muted-foreground mt-1">Füllen Sie die Details aus, um eine neue anonyme Umfrage zu veröffentlichen.</p>
+                <p className="text-muted-foreground mt-1">Fülle die Details aus, um eine neue anonyme Umfrage zu veröffentlichen.</p>
             </header>
             <SurveyForm allUsers={allUsers} currentUser={user} mode="create" />
         </div>

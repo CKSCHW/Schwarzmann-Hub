@@ -151,7 +151,7 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
               {editingId ? 'Termin bearbeiten' : 'Neuen Termin erstellen'}
             </CardTitle>
             <CardDescription>
-              {editingId ? 'Ändern Sie die Details des Termins.' : 'Erstellen Sie Termine für bestimmte Mitarbeitergruppen.'}
+              {editingId ? 'Ändere die Details des Termins.' : 'Erstelle Termine für bestimmte Mitarbeitergruppen.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -230,7 +230,7 @@ export default function AppointmentManager({ initialAppointments }: AppointmentM
                        <div className="mb-4">
                         <FormLabel className="text-base">Gruppen zuweisen</FormLabel>
                         <p className="text-sm text-muted-foreground">
-                            Wählen Sie aus, wer diesen Termin sehen soll. Wenn Sie keine Gruppe auswählen, ist der Termin für alle sichtbar.
+                            Wähle aus, wer diesen Termin sehen soll. Wenn du keine Gruppe auswählst, ist der Termin für alle sichtbar.
                         </p>
                        </div>
                       <div className="grid grid-cols-2 gap-2">

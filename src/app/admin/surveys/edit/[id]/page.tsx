@@ -12,7 +12,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function EditSurveyPage({ params }: { params: { id: string } }) {
     const user = await getCurrentUser();
-    const isSurveyManager = user?.isAdmin || user?.groups?.includes('Projektleiter') || user?.groups?.includes('Schulungsleiter');
+    if (!user) {
+        redirect('/login');
+    }
+    const isSurveyManager = user.isAdmin || user.groups?.includes('Projektleiter') || user.groups?.includes('Schulungsleiter');
     if (!isSurveyManager) {
         redirect('/');
     }
@@ -36,7 +39,7 @@ export default async function EditSurveyPage({ params }: { params: { id: string 
             </Button>
             <header className="mb-6 mt-4">
                 <h1 className="text-3xl font-bold">Umfrage bearbeiten</h1>
-                <p className="text-muted-foreground mt-1">Passen Sie die Details der Umfrage an.</p>
+                <p className="text-muted-foreground mt-1">Passe die Details der Umfrage an.</p>
             </header>
             <SurveyForm allUsers={allUsers} currentUser={user} mode="edit" initialData={survey} />
         </div>

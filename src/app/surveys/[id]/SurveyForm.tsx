@@ -25,13 +25,13 @@ const generateSchema = (survey: Survey) => {
     const schemaObject = survey.questions.reduce((acc, question) => {
         switch(question.type) {
             case 'rating':
-                acc[question.id] = z.string({ required_error: "Bitte wählen Sie eine Bewertung aus."}).nonempty("Bitte wählen Sie eine Bewertung aus.").transform(Number);
+                acc[question.id] = z.string({ required_error: "Bitte wähle eine Bewertung aus."}).nonempty("Bitte wähle eine Bewertung aus.").transform(Number);
                 break;
             case 'multiple-choice':
-                acc[question.id] = z.string({ required_error: "Bitte wählen Sie eine Option aus." });
+                acc[question.id] = z.string({ required_error: "Bitte wähle eine Option aus." });
                 break;
             case 'text':
-                acc[question.id] = z.string().nonempty({ message: "Bitte geben Sie eine Antwort ein." });
+                acc[question.id] = z.string().nonempty({ message: "Bitte gib eine Antwort ein." });
                 break;
         }
         return acc;
@@ -136,7 +136,7 @@ export default function SurveyForm({ survey }: SurveyFormProps) {
                         render={({ field }) => (
                             <Textarea
                                 {...field}
-                                placeholder="Ihre anonyme Antwort..."
+                                placeholder="Deine anonyme Antwort..."
                                 rows={4}
                             />
                         )}

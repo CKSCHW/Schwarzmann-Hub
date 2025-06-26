@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +34,7 @@ const surveySchema = z.object({
   title: z.string().min(5, 'Titel muss mindestens 5 Zeichen haben.'),
   description: z.string().min(10, 'Beschreibung muss mindestens 10 Zeichen haben.'),
   questions: z.array(questionSchema).min(1, 'Mindestens eine Frage ist erforderlich.'),
-  assignedUserIds: z.array(z.string()).min(1, 'Weisen Sie mindestens einen Benutzer zu.'),
+  assignedUserIds: z.array(z.string()).min(1, 'Weise mindestens einen Benutzer zu.'),
 }).superRefine((data, ctx) => {
     data.questions.forEach((q, index) => {
         if (q.type === 'multiple-choice') {
@@ -228,7 +228,7 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
             <Card>
                 <CardHeader>
                     <CardTitle>Fragen</CardTitle>
-                    <CardDescription>Fügen Sie die Fragen für Ihre Umfrage hinzu und konfigurieren Sie sie.</CardDescription>
+                    <CardDescription>Füge die Fragen für deine Umfrage hinzu und konfiguriere sie.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {fields.map((field, index) => (
@@ -250,7 +250,7 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
             <Card>
                 <CardHeader>
                     <CardTitle>Teilnehmer</CardTitle>
-                    <CardDescription>Wählen Sie aus, welche Mitarbeiter an dieser Umfrage teilnehmen sollen.</CardDescription>
+                    <CardDescription>Wähle aus, welche Mitarbeiter an dieser Umfrage teilnehmen sollen.</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <FormField control={form.control} name="assignedUserIds" render={({ field }) => (
@@ -265,7 +265,7 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
                             <DialogContent className="max-w-md">
                                 <DialogHeader>
                                     <DialogTitle>Teilnehmer auswählen</DialogTitle>
-                                    <DialogDescription>Wählen Sie die Benutzer aus, die an dieser Umfrage teilnehmen sollen.</DialogDescription>
+                                    <DialogDescription>Wähle die Benutzer aus, die an dieser Umfrage teilnehmen sollen.</DialogDescription>
                                 </DialogHeader>
                                 <div className="relative">
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

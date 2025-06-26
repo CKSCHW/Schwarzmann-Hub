@@ -21,7 +21,7 @@ export default async function SchedulePage() {
           Wocheneinteilung
         </h1>
         <p className="text-muted-foreground mb-6">
-          Sehen und laden Sie die neuesten Wocheneinteilungen herunter.
+          Sieh und lade die neuesten Wocheneinteilungen herunter.
         </p>
       </section>
       

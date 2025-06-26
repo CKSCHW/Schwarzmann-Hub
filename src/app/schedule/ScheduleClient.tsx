@@ -25,7 +25,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 interface ScheduleClientProps {
@@ -57,7 +56,7 @@ export default function ScheduleClient({ initialSchedules, isAdmin, initialDownl
   const handleUpload = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!fileInputRef.current?.files?.length) {
-        toast({ title: "Keine Datei ausgewählt", description: "Bitte wählen Sie eine PDF-Datei aus.", variant: "destructive" });
+        toast({ title: "Keine Datei ausgewählt", description: "Bitte wähle eine PDF-Datei aus.", variant: "destructive" });
         return;
     }
     
@@ -100,7 +99,7 @@ export default function ScheduleClient({ initialSchedules, isAdmin, initialDownl
               Neuen Plan hochladen
             </CardTitle>
             <CardDescription>
-              Hier können Sie neue Wochenpläne im PDF-Format hochladen.
+              Hier kannst du neue Wochenpläne im PDF-Format hochladen.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -119,7 +118,7 @@ export default function ScheduleClient({ initialSchedules, isAdmin, initialDownl
       <Card>
         <CardHeader>
           <CardTitle>Verfügbare Pläne</CardTitle>
-          {isAdmin && <CardDescription>Klicken Sie auf einen Eintrag, um die Download-Statistiken anzuzeigen.</CardDescription>}
+          {isAdmin && <CardDescription>Klicke auf einen Eintrag, um die Download-Statistiken anzuzeigen.</CardDescription>}
         </CardHeader>
         <CardContent className="p-0">
           <Accordion type="multiple" className="w-full">
@@ -161,7 +160,7 @@ export default function ScheduleClient({ initialSchedules, isAdmin, initialDownl
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
+                                    <AlertDialogTitle>Bist du sicher?</AlertDialogTitle>
                                     <AlertDialogDescription>
                                       Diese Aktion kann nicht rückgängig gemacht werden. Der Plan wird endgültig vom Server gelöscht.
                                     </AlertDialogDescription>
@@ -195,14 +194,14 @@ export default function ScheduleClient({ initialSchedules, isAdmin, initialDownl
                             <Table>
                               <TableHeader>
                                 <TableRow>
-                                  <TableHead>Mitarbeiter (E-Mail)</TableHead>
+                                  <TableHead>Mitarbeiter</TableHead>
                                   <TableHead>Heruntergeladen am</TableHead>
                                 </TableRow>
                               </TableHeader>
                               <TableBody>
                                 {scheduleReceipts.map(receipt => (
                                   <TableRow key={receipt.id}>
-                                    <TableCell>{receipt.user?.email ?? 'Unbekannt'}</TableCell>
+                                    <TableCell>{receipt.user?.displayName || receipt.user?.email || 'Unbekannt'}</TableCell>
                                     <TableCell>{new Date(receipt.downloadedAt).toLocaleString('de-DE')}</TableCell>
                                   </TableRow>
                                 ))}

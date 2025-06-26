@@ -58,6 +58,9 @@ export interface SimpleUser {
     photoURL?: string;
     isAdmin?: boolean;
     groups?: UserGroup[];
+    firstName?: string;
+    lastName?: string;
+    title?: string;
 }
 
 export interface ReadReceiptWithUser extends ReadReceipt {
@@ -153,7 +156,7 @@ export interface SurveyCompletion {
 }
 
 export interface SurveyResponse {
-    id: string;
+    id:string;
     surveyId: string;
     submittedAt: string; // ISO
     answers: {
