@@ -8,58 +8,65 @@ This application uses Firebase for server-side features and requires a **Service
 
 ### Where to Get Your Firebase Service Account Key
 
-1.  Open your web browser and go to the **Firebase Console**: [https://console.firebase.google.com/](https://console.firebase.google.com/)
-2.  Select your project, which is named **`work-news-hub`**.
-3.  In the top-left corner, click the **gear icon** ⚙️ next to "Project Overview".
-4.  From the menu, select **Project settings**.
-5.  In the Project settings page, click on the **Service accounts** tab.
-6.  Click the blue **"Generate new private key"** button. A warning will appear; click **"Generate key"** to confirm.
-7.  A JSON file (e.g., `work-news-hub-firebase-adminsdk-....json`) will be downloaded to your computer. **This file contains your key.**
+1.  Go to the **Firebase Console**: [https://console.firebase.google.com/](https://console.firebase.google.com/)
+2.  Select your project: **`work-news-hub`**.
+3.  Click the **gear icon** ⚙️ next to "Project Overview" -> **Project settings**.
+4.  Go to the **Service accounts** tab.
+5.  Click **"Generate new private key"**.
 
 ### How to Set the Environment Variable
 
-1.  **Find the `.env.local` file:** This file should be in the root directory of your project. If it doesn't exist, create it.
-2.  **Open the downloaded JSON file** and copy its **entire content**.
-3.  **Open the `.env.local` file** in your editor.
-4.  Paste the JSON content as the value for `FIREBASE_SERVICE_ACCOUNT_KEY`. The line must look exactly like this, with your key inside the single quotes:
+1.  Find or create the `.env.local` file in the root directory of your project.
+2.  Open the downloaded JSON file and copy its **entire content**.
+3.  Paste the JSON content as the value for `FIREBASE_SERVICE_ACCOUNT_KEY` inside single quotes:
     ```
     FIREBASE_SERVICE_ACCOUNT_KEY='{"type": "service_account", "project_id": "...", ...}'
     ```
-5.  **VAPID Keys:** For push notifications, you also need to generate and add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` to this file. See `deployment-notes.md` for instructions.
-6.  **Restart Your Server:** If the server is running, you must stop it (`Ctrl+C`) and restart it (`npm run dev`) for the changes to take effect.
+4.  **VAPID Keys:** For push notifications, you also need to generate and add `NEXT_PUBLIC_VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` to this file. See `deployment-notes.md` for instructions.
+5.  **Restart Your Server:** If it's running, stop it (`Ctrl+C`) and restart it (`npm run dev`).
 
-If you don't do this, the app will show a `CRITICAL CONFIGURATION ERROR` and will not start. **This is a security feature, not a code bug.**
+Failure to do this will result in a `CRITICAL CONFIGURATION ERROR`.
 
-## 🚀 Getting Started
+---
 
-Once the key is configured, you can get started by taking a look at `src/app/page.tsx`.
+## 📱 Testing Push Notifications Locally with `ngrok`
 
-## 📱 Testing Push Notifications Locally
+Push notifications require a secure context (**HTTPS**). Your local server runs on `http://localhost:3000`, which is not secure. To test on your phone, we use `ngrok` to create a secure, public tunnel to your local server.
 
-Push notifications require a secure context (**HTTPS**). To test this locally from other devices (like your phone), we use `ngrok` to create a secure, public tunnel to your local server.
+### `ngrok` First-Time Setup (A one-time action per computer)
 
-### First-Time Setup for `ngrok` (One-Time Only)
+`ngrok` needs a free account and an "authtoken" to work.
 
-`ngrok` requires a free account and an "authtoken" to work. This is a quick, one-time setup.
+1.  **Sign Up:** Go to [https://dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup) and create a free account.
+2.  **Get Your Authtoken:** Go to the "Your Authtoken" page: [https://dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken).
+3.  **Copy the Command:** You will see a command that looks like this: `ngrok config add-authtoken <YOUR_PERSONAL_TOKEN>`. Copy this entire line.
+4.  **Run the Command in Your Terminal:**
+    *   Open any terminal or command prompt application on your computer (like Terminal on macOS, PowerShell on Windows, or your editor's built-in terminal).
+    *   You **do not** need to be inside your project folder for this step.
+    *   Paste the command you copied and press Enter.
 
-1.  **Sign Up:** Go to the `ngrok` dashboard and create a free account: [https://dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup)
-2.  **Get Your Authtoken:** After signing up, go to the "Your Authtoken" section of the dashboard: [https://dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken)
-3.  **Copy the `ngrok config add-authtoken ...` command** provided on that page. It will look like this: `ngrok config add-authtoken <YOUR_TOKEN>`
-4.  **Run the command** in your terminal. This saves your token to a local configuration file, so you only have to do this once per machine.
+This command saves your token to a global `ngrok` configuration file on your computer. You will not need to do this again on this machine.
 
-### How to Use It
+### How to Use `ngrok` to Test Push Notifications
 
-1.  **Start the development server** in your first terminal window, as usual:
+To test on your phone, you need **two terminal windows** running at the same time.
+
+**Terminal 1: Start your app**
+1.  Open a terminal in your project's root folder.
+2.  Run the development server as usual:
     ```bash
     npm run dev
     ```
-    This makes your app available on your local machine at `http://localhost:3000`.
+    *This makes your app available at `http://localhost:3000`.*
 
-2.  **Start the secure tunnel** in a **second, separate terminal window**:
+**Terminal 2: Start the secure tunnel**
+1.  **Open a second, new terminal window.** Keep the first one running.
+2.  Navigate to your project's root folder in this new terminal.
+3.  Run the public tunnel command:
     ```bash
     npm run dev:public
     ```
 
-3.  `ngrok` will give you a public URL that looks something like `https://random-string.ngrok-free.app`.
+`ngrok` will now display a public URL that looks like `https://<random-string>.ngrok-free.app`.
 
-4.  **Use this `https://...` URL** to open the app on your phone or in any browser. Because this connection is secure, you will be able to test the entire push notification workflow, including subscribing and receiving test notifications.
+**Use this `https://...` URL** to open the app on your phone. Because this connection is secure (HTTPS), you will be able to test the entire push notification workflow.
