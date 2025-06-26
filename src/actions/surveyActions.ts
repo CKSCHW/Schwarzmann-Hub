@@ -63,12 +63,18 @@ export async function getSurveysForUser(): Promise<SurveyWithCompletion[]> {
     const user = await getCurrentUser();
     if (!user) return [];
 
+    // The combination of where('...','array-contains',...) and orderBy(...) on a different field
+    // requires a composite index in Firestore. To avoid this manual configuration step for the user,
+    // we fetch the documents first and then sort them in the application code.
     const surveysSnapshot = await adminDb.collection('surveys')
         .where('assignedUserIds', 'array-contains', user.uid)
-        .orderBy('createdAt', 'desc')
         .get();
 
     const surveys = surveysSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Survey));
+    
+    // Manually sort by creation date, descending.
+    surveys.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
 
     if (surveys.length === 0) return [];
 
