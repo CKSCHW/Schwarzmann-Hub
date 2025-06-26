@@ -1,4 +1,3 @@
-
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -53,8 +52,13 @@ export async function deleteSurvey(surveyId: string): Promise<void> {
 }
 
 export async function getSurveysCreatedBy(userId: string): Promise<Survey[]> {
-    const snapshot = await adminDb.collection('surveys').where('createdBy', '==', userId).orderBy('createdAt', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Survey));
+    const snapshot = await adminDb.collection('surveys').where('createdBy', '==', userId).get();
+    const surveys = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Survey));
+
+    // Manually sort by creation date, descending, to avoid needing a composite index.
+    surveys.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return surveys;
 }
 
 // ---- User-facing actions ----
