@@ -10,7 +10,7 @@ import type { Notification, PushNotificationPayload, NotificationReceipt, Notifi
 export async function saveSubscription(subscription: Omit<StoredPushSubscription, 'userId'>, userId: string) {
   if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
     console.error('VAPID keys are not set in environment variables.');
-    return { success: false, error: 'VAPID keys are not configured.' };
+    return { success: false, error: 'VAPID-Schlüssel sind nicht konfiguriert.' };
   }
   
   const sub: StoredPushSubscription = {
@@ -42,8 +42,62 @@ export async function deleteSubscription(endpoint: string) {
     }
 }
 
+// Sends a transient push notification to a specific list of users without saving it to the database history.
+// Ideal for user-specific alerts like survey invitations.
+export async function sendPushNotificationToUsers(
+    userIds: string[],
+    payload: Omit<PushNotificationPayload, 'notificationId'>
+) {
+    if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+        console.log('Push-Benachrichtigungen sind auf dem Server nicht konfiguriert. Senden wird übersprungen.');
+        return;
+    }
+    if (!userIds || userIds.length === 0) {
+        return;
+    }
 
-// Central function to create a notification and send push messages
+    webpush.setVapidDetails(
+        'mailto:info@elektro-schwarzmann.at',
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY
+    );
+
+    const notificationString = JSON.stringify(payload);
+    const promises: Promise<any>[] = [];
+
+    // Firestore 'in' query is limited to 30 values. Chunk the userIds.
+    const chunks: string[][] = [];
+    for (let i = 0; i < userIds.length; i += 30) {
+        chunks.push(userIds.slice(i, i + 30));
+    }
+
+    for (const chunk of chunks) {
+        const subscriptionsSnapshot = await adminDb.collection('subscriptions').where('userId', 'in', chunk).get();
+        if (subscriptionsSnapshot.empty) {
+            continue;
+        }
+
+        subscriptionsSnapshot.forEach(doc => {
+            const subscription = doc.data() as webpush.PushSubscription;
+            promises.push(
+                webpush.sendNotification(subscription, notificationString)
+                    .catch(error => {
+                        if (error.statusCode === 404 || error.statusCode === 410) {
+                            console.log('Abonnement ist abgelaufen oder nicht mehr gültig, wird gelöscht: ', error.endpoint);
+                            return doc.ref.delete();
+                        } else {
+                            console.error('Fehler beim Senden der Push-Benachrichtigung an den Endpunkt:', error.endpoint, error.body);
+                        }
+                    })
+            );
+        });
+    }
+
+    await Promise.all(promises);
+}
+
+
+// Central function to create a notification and send push messages to ALL users.
 export async function sendAndSavePushNotification(payload: Omit<Notification, 'id' | 'createdAt'>) {
     // 1. Save notification to the database
     const notificationsCollection = adminDb.collection('notifications');
@@ -57,7 +111,7 @@ export async function sendAndSavePushNotification(payload: Omit<Notification, 'i
 
     // 2. Send push notifications
     if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
-        console.log('Push notifications are not configured on the server. Skipping send.');
+        console.log('Push-Benachrichtigungen sind auf dem Server nicht konfiguriert. Senden wird übersprungen.');
         return;
     }
 
@@ -69,7 +123,7 @@ export async function sendAndSavePushNotification(payload: Omit<Notification, 'i
 
     const subscriptionsSnapshot = await adminDb.collection('subscriptions').get();
     if (subscriptionsSnapshot.empty) {
-        console.log('No push notification subscriptions found.');
+        console.log('Keine Push-Benachrichtigungs-Abonnements gefunden.');
         return;
     }
 
@@ -89,10 +143,10 @@ export async function sendAndSavePushNotification(payload: Omit<Notification, 'i
             webpush.sendNotification(subscription, notificationString)
                 .catch(error => {
                     if (error.statusCode === 404 || error.statusCode === 410) {
-                        console.log('Subscription has expired or is no longer valid, deleting: ', error.endpoint);
+                        console.log('Abonnement ist abgelaufen oder nicht mehr gültig, wird gelöscht: ', error.endpoint);
                         return doc.ref.delete();
                     } else {
-                        console.error('Error sending push notification to endpoint:', error.endpoint, error.body);
+                        console.error('Fehler beim Senden der Push-Benachrichtigung an den Endpunkt:', error.endpoint, error.body);
                     }
                 })
         );
@@ -162,7 +216,7 @@ export async function markNotificationAsClicked(notificationId: string, userId: 
       clickedAt: new Date().toISOString(),
     }, { merge: true });
   } catch (error) {
-    console.error(`Failed to mark notification ${notificationId} as clicked for user ${userId}:`, error);
+    console.error(`Fehler beim Markieren der Benachrichtigung ${notificationId} als geklickt für Benutzer ${userId}:`, error);
   }
 }
 
@@ -186,7 +240,7 @@ export async function markNotificationsAsRead(userId: string, notificationIds: s
     await batch.commit();
     revalidatePath('/layout');
   } catch (error) {
-    console.error(`Failed to mark notifications as read for user ${userId}:`, error);
+    console.error(`Fehler beim Markieren von Benachrichtigungen als gelesen für Benutzer ${userId}:`, error);
   }
 }
 
@@ -204,6 +258,6 @@ export async function deleteNotificationForUser(notificationId: string, userId: 
     }, { merge: true });
     revalidatePath('/layout');
   } catch (error) {
-    console.error(`Failed to delete notification ${notificationId} for user ${userId}:`, error);
+    console.error(`Fehler beim Löschen der Benachrichtigung ${notificationId} für Benutzer ${userId}:`, error);
   }
 }

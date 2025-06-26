@@ -81,11 +81,11 @@ export function usePushManager() {
       if (isIos && !window.matchMedia('(display-mode: standalone)').matches) {
           toast({
             title: 'Hinweis für iPhone-Nutzer',
-            description: 'Um Benachrichtigungen zu erhalten, fügen Sie diese App bitte zuerst zu Ihrem Home-Bildschirm hinzu (über das "Teilen"-Menü in Safari). Öffnen Sie die App dann vom Home-Bildschirm und aktivieren Sie die Benachrichtigungen hier erneut.',
+            description: 'Um Benachrichtigungen zu erhalten, füge diese App bitte zuerst zu deinem Home-Bildschirm hinzu (über das "Teilen"-Menü in Safari). Öffne die App dann vom Home-Bildschirm und aktiviere die Benachrichtigungen hier erneut.',
             duration: 12000,
           });
       } else {
-        toast({ title: 'Nicht unterstützt', description: 'Ihr Browser unterstützt keine Push-Benachrichtigungen.', variant: 'destructive'});
+        toast({ title: 'Nicht unterstützt', description: 'Dein Browser unterstützt keine Push-Benachrichtigungen.', variant: 'destructive'});
       }
       return;
     }
@@ -122,7 +122,7 @@ export function usePushManager() {
         setSubscription(newSubscription);
         setIsSubscribed(true);
         setPermission('granted');
-        toast({ title: 'Erfolg', description: 'Sie erhalten nun Benachrichtigungen.' });
+        toast({ title: 'Erfolg', description: 'Du erhältst nun Benachrichtigungen.' });
       } else {
         await newSubscription.unsubscribe();
         throw new Error(result.error);
@@ -133,7 +133,7 @@ export function usePushManager() {
         setPermission('denied');
         toast({ 
           title: 'Benachrichtigungen blockiert', 
-          description: 'Sie können die Berechtigung in den Browser-Einstellungen ändern.',
+          description: 'Du kannst die Berechtigung in den Browser-Einstellungen ändern.',
           variant: 'destructive'
         });
       } else {
@@ -159,7 +159,7 @@ export function usePushManager() {
       
       setSubscription(null);
       setIsSubscribed(false);
-      toast({ title: 'Abgemeldet', description: 'Sie erhalten keine Benachrichtigungen mehr.' });
+      toast({ title: 'Abgemeldet', description: 'Du erhältst keine Benachrichtigungen mehr.' });
     } catch (error) {
       console.error('Failed to unsubscribe from push notifications:', error);
       toast({ title: 'Fehler beim Abmelden', description: 'Die Benachrichtigungen konnten nicht deaktiviert werden.', variant: 'destructive'});

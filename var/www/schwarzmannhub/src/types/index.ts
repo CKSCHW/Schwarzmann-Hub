@@ -19,6 +19,8 @@ export const userGroups = [
   "Lehrlinge",
   "Geschäftsleitung",
   "C Level",
+  "Projektleiter",
+  "Schulungsleiter",
 ] as const;
 
 export type UserGroup = (typeof userGroups)[number];
@@ -56,6 +58,9 @@ export interface SimpleUser {
     photoURL?: string;
     isAdmin?: boolean;
     groups?: UserGroup[];
+    firstName?: string;
+    lastName?: string;
+    title?: string;
 }
 
 export interface ReadReceiptWithUser extends ReadReceipt {
@@ -117,4 +122,54 @@ export interface NotificationReceipt {
 export interface NotificationWithStatus extends Notification {
   isRead: boolean;
   isClicked: boolean;
+}
+
+// --- Survey Types ---
+
+export const questionTypes = ["rating", "text", "multiple-choice"] as const;
+export type QuestionType = (typeof questionTypes)[number];
+
+export interface SurveyQuestion {
+  id: string;
+  text: string;
+  type: QuestionType;
+  options?: string[];
+}
+
+export interface Survey {
+  id: string;
+  title: string;
+  description: string;
+  questions: SurveyQuestion[];
+  createdBy: string;
+  creatorEmail: string;
+  createdAt: string; // ISO
+  assignedUserIds: string[];
+  completionCount: number;
+}
+
+export interface SurveyCompletion {
+    id: string; // `${userId}_${surveyId}`
+    userId: string;
+    surveyId: string;
+    completedAt: string; // ISO
+}
+
+export interface SurveyResponse {
+    id:string;
+    surveyId: string;
+    submittedAt: string; // ISO
+    answers: {
+        questionId: string;
+        value: string | number;
+    }[];
+}
+
+export interface SurveyResult {
+    survey: Survey;
+    responses: SurveyResponse[];
+}
+
+export interface SurveyWithCompletion extends Survey {
+    completed: boolean;
 }

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -18,7 +19,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarDays, LogOut, ShieldCheck, Newspaper, BellOff, BellRing, User } from "lucide-react";
+import { Home, CalendarDays, LogOut, ShieldCheck, Newspaper, BellOff, BellRing, User, ClipboardList } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
@@ -26,6 +27,7 @@ import NotificationBell from "./NotificationBell";
 import { usePushManager } from "@/hooks/usePushManager";
 import { Suspense } from "react";
 import NotificationHandler from "./NotificationHandler";
+import type { SimpleUser } from "@/types";
 
 type NavItem = {
   href: string;
@@ -33,12 +35,14 @@ type NavItem = {
   icon: React.ElementType;
   match?: (pathname: string) => boolean;
   adminOnly?: boolean;
+  requiresAuth?: boolean;
 };
 
 const navItems: NavItem[] = [
   { href: "/", label: "Startseite", icon: Home, match: (pathname) => pathname === "/" },
   { href: "/news", label: "News", icon: Newspaper, match: (pathname) => pathname.startsWith("/news") },
   { href: "/schedule", label: "Wocheneinteilung", icon: CalendarDays },
+  { href: "/surveys", label: "Umfragen", icon: ClipboardList, match: (pathname) => pathname.startsWith("/surveys")},
   { href: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
 ];
 
@@ -81,7 +85,7 @@ const AppNav = () => {
   );
 };
 
-const AppHeader = () => {
+const AppHeader = ({user}: {user: SimpleUser | null}) => {
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur md:px-6">
       <div className="flex w-full items-center justify-between">
@@ -92,16 +96,18 @@ const AppHeader = () => {
             </Link>
         </div>
         <div className="flex items-center gap-4">
-          <NotificationBell />
-          <UserMenu />
+          <Suspense fallback={<div />}>
+            <NotificationBell />
+          </Suspense>
+          <UserMenu user={user} />
         </div>
       </div>
     </header>
   );
 };
 
-const UserMenu = () => {
-  const { user, logout, isAdmin } = useAuth();
+const UserMenu = ({user}: {user: SimpleUser | null}) => {
+  const { logout, isAdmin } = useAuth();
   const router = useRouter();
   const { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, loading } = usePushManager();
 
@@ -120,19 +126,21 @@ const UserMenu = () => {
 
   if (!user) return null;
 
+  const initials = (user.firstName?.[0] ?? '') + (user.lastName?.[0] ?? '') || user.email?.[0].toUpperCase() || 'ES';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={`https://placehold.co/40x40.png/EBF4FF/76A9EA?text=${user.email?.[0].toUpperCase() ?? 'U'}`} alt="Benutzer-Avatar" data-ai-hint="user avatar" />
-            <AvatarFallback>{user.email?.[0].toUpperCase() ?? 'ES'}</AvatarFallback>
+            <AvatarImage src={user.photoURL ?? undefined} alt={user.displayName ?? 'Benutzer-Avatar'} data-ai-hint="user avatar" />
+            <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <span className="sr-only">Benutzermenü umschalten</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuLabel>{user.email}</DropdownMenuLabel>
+        <DropdownMenuLabel>{user.displayName || user.email}</DropdownMenuLabel>
         {isAdmin && <DropdownMenuLabel className="text-xs font-normal text-accent -mt-2">Administrator</DropdownMenuLabel>}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -167,7 +175,7 @@ const UserMenu = () => {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, fullUser } = useAuth();
 
   // Effect for registering the service worker
   React.useEffect(() => {
@@ -205,21 +213,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && pathname !== '/login') {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Image
-            src="https://www.elektro-schwarzmann.at/wp-content/uploads/2022/05/Elektro_Schwarzmann_Logo.svg"
-            alt="Elektro Schwarzmann Logo"
-            width={240}
-            height={55}
-            unoptimized
-            className="animate-pulse"
-        />
-      </div>
-    );
-  }
-  
   if (!user && pathname === '/login') {
     return <>{children}</>;
   }
@@ -263,7 +256,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         <SidebarInset className="flex flex-col">
-          <AppHeader />
+          <AppHeader user={fullUser}/>
           <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
             {children}
           </main>

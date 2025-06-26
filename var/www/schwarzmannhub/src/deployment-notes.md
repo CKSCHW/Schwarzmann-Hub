@@ -1,3 +1,4 @@
+
 # How to Deploy Your Next.js App on Ubuntu
 
 Excellent! Now that Nginx is running correctly, here is a complete guide to deploy your application. This process uses **PM2** to keep your app running and **Nginx** as a reverse proxy to handle web traffic.
