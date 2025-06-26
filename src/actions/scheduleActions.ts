@@ -2,9 +2,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { adminDb, adminStorage, getCurrentUser } from '@/lib/firebase-admin';
+import { adminDb, getCurrentUser } from '@/lib/firebase-admin';
 import type { ScheduleFile } from '@/types';
 import { sendAndSavePushNotification } from './notificationActions';
+import fs from 'fs/promises';
+import path from 'path';
 
 async function verifyAdmin() {
     const user = await getCurrentUser();
@@ -31,25 +33,25 @@ export async function uploadSchedule(formData: FormData): Promise<{ success: boo
         if (file.type !== 'application/pdf') {
             return { success: false, message: 'Es sind nur PDF-Dateien erlaubt.' };
         }
-        
-        const bucket = adminStorage.bucket();
-        const filePath = `schedules/${Date.now()}-${file.name}`;
-        const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-        const fileUpload = bucket.file(filePath);
-        await fileUpload.save(fileBuffer, {
-            metadata: {
-                contentType: file.type,
-            },
-        });
+        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        const uploadDir = path.join(process.cwd(), 'public', 'schedules');
         
-        // Make the file public to get a download URL
-        await fileUpload.makePublic();
+        // Ensure the upload directory exists
+        await fs.mkdir(uploadDir, { recursive: true });
+
+        // Create a unique filename
+        const uniqueFilename = `${Date.now()}-${file.name.replace(/\s+/g, '_')}`;
+        const localFilePath = path.join(uploadDir, uniqueFilename);
+        const publicUrl = `/schedules/${uniqueFilename}`;
+
+        // Write the file to the local filesystem
+        await fs.writeFile(localFilePath, fileBuffer);
 
         const newSchedule: Omit<ScheduleFile, 'id'> = {
             name: file.name,
-            filePath: filePath,
-            url: fileUpload.publicUrl(),
+            filePath: localFilePath, // Store absolute path for server-side deletion
+            url: publicUrl, // Store public URL for client-side access
             size: file.size,
             dateAdded: new Date().toISOString(),
         };
@@ -73,32 +75,35 @@ export async function uploadSchedule(formData: FormData): Promise<{ success: boo
 
     } catch (error: any) {
         console.error("Upload error:", error);
-        if (error.code === 404 || (error.message && error.message.includes('does not exist'))) {
-            return { success: false, message: 'Firebase Storage bucket nicht gefunden. Bitte Storage in der Firebase Console aktivieren.' };
-        }
         return { success: false, message: error.message || 'Ein Fehler ist aufgetreten.' };
     }
 }
 
-export async function deleteSchedule(scheduleId: string, filePath: string): Promise<{ success: boolean, message: string }> {
+export async function deleteSchedule(scheduleId: string): Promise<{ success: boolean, message: string }> {
      try {
         await verifyAdmin();
 
-        const bucket = adminStorage.bucket();
+        const scheduleDocRef = adminDb.collection('schedules').doc(scheduleId);
+        const scheduleDoc = await scheduleDocRef.get();
         
-        // Find the document to delete to get the filePath
-        const scheduleDoc = await adminDb.collection('schedules').where('id', '==', scheduleId).limit(1).get();
-        if (scheduleDoc.empty) {
+        if (!scheduleDoc.exists) {
             return { success: false, message: 'Dokument nicht gefunden.'};
         }
-        const docToDelete = scheduleDoc.docs[0];
-        const docData = docToDelete.data() as ScheduleFile;
         
+        const docData = scheduleDoc.data() as ScheduleFile;
+        
+        // Delete from local filesystem
+        try {
+            if (docData.filePath) {
+                await fs.unlink(docData.filePath);
+            }
+        } catch (fsError: any) {
+            // Log if file doesn't exist, but don't block deletion from DB
+            console.warn(`Could not delete file from filesystem: ${docData.filePath}. Error: ${fsError.message}`);
+        }
+
         // Delete from Firestore
-        await docToDelete.ref.delete();
-        
-        // Delete from Storage
-        await bucket.file(docData.filePath).delete();
+        await scheduleDocRef.delete();
         
         revalidatePath('/schedule');
         revalidatePath('/api/schedules');

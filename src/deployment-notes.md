@@ -1,3 +1,4 @@
+
 # How to Deploy Your Next.js App on Ubuntu
 
 Excellent! Now that Nginx is running correctly, here is a complete guide to deploy your application. This process uses **PM2** to keep your app running and **Nginx** as a reverse proxy to handle web traffic.
@@ -142,19 +143,6 @@ If you start the app and still see the `CRITICAL CONFIGURATION ERROR`, it is **1
 *   **❗ File Not Saved Correctly:** The file was not saved as `.env.local` in the root of your project (`/var/www/my-app`). Use `ls -a` to check for hidden files.
 
 ---
-
-### 4.5 (One-Time Setup) Activate Firebase Storage
-
-Before you can upload files (like weekly schedules), you must enable the Storage service in your Firebase project. This only needs to be done once.
-
-1.  Go to the **Firebase Console** and select your `work-news-hub` project.
-2.  In the left menu, go to **Build > Storage**.
-3.  Click the **"Get started"** button.
-4.  Follow the on-screen prompts. You can accept the default security rules for now (they allow authenticated users to read/write).
-5.  Choose the default cloud storage location when prompted.
-
-Once this is complete, the `The specified bucket does not exist` error will be resolved.
-
 
 ### 5. Start the Application with PM2
 

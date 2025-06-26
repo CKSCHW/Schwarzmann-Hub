@@ -57,9 +57,7 @@ export default function ScheduleClient({ initialSchedules, isAdmin }: ScheduleCl
     const result = await uploadSchedule(formData);
 
     if (result.success) {
-        // Refetch or update state
-        const newSchedules = await (await fetch('/api/schedules')).json(); // This needs a new API route or re-fetch logic
-        // For now, let's just reload the page as a simple solution
+        // Simple reload to show new schedules, avoids complex state management
         window.location.reload();
         toast({ title: "Upload erfolgreich", description: result.message });
     } else {
@@ -72,11 +70,11 @@ export default function ScheduleClient({ initialSchedules, isAdmin }: ScheduleCl
     setIsUploading(false);
   };
 
-  const handleDelete = async (schedule: ScheduleFile) => {
-    setIsDeleting(schedule.id);
-    const result = await deleteSchedule(schedule.id, schedule.filePath);
+  const handleDelete = async (scheduleId: string) => {
+    setIsDeleting(scheduleId);
+    const result = await deleteSchedule(scheduleId);
     if (result.success) {
-      setSchedules((prev) => prev.filter((s) => s.id !== schedule.id));
+      setSchedules((prev) => prev.filter((s) => s.id !== scheduleId));
       toast({ title: "Erfolgreich gelöscht", description: result.message });
     } else {
       toast({ title: "Löschen fehlgeschlagen", description: result.message, variant: "destructive" });
@@ -156,12 +154,12 @@ export default function ScheduleClient({ initialSchedules, isAdmin }: ScheduleCl
                             <AlertDialogHeader>
                               <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
                               <AlertDialogDescription>
-                                Diese Aktion kann nicht rückgängig gemacht werden. Der Plan wird endgültig gelöscht.
+                                Diese Aktion kann nicht rückgängig gemacht werden. Der Plan wird endgültig vom Server gelöscht.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                               <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(schedule)}>Löschen</AlertDialogAction>
+                              <AlertDialogAction onClick={() => handleDelete(schedule.id)}>Löschen</AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
                         </AlertDialog>

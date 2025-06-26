@@ -2,7 +2,6 @@
 import { initializeApp, getApps, getApp, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
 import { cookies, headers } from 'next/headers';
 import type { SimpleUser } from '@/types';
 
@@ -18,7 +17,6 @@ if (getApps().length === 0) {
     const serviceAccount = JSON.parse(serviceAccountString);
     initializeApp({
       credential: cert(serviceAccount),
-      storageBucket: 'work-news-hub.appspot.com',
     });
   } catch (e: any) {
     // This will catch JSON parsing errors and initialization errors
@@ -29,7 +27,6 @@ if (getApps().length === 0) {
 const adminApp = getApp();
 export const adminDb = getFirestore(adminApp);
 export const adminAuth = getAuth(adminApp);
-export const adminStorage = getStorage(adminApp);
 
 // Helper function to get the current user on the server side
 export async function getCurrentUser(): Promise<SimpleUser | null> {
