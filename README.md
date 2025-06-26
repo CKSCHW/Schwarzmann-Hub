@@ -35,32 +35,31 @@ Push notifications require a secure context (**HTTPS**). Your local server runs 
 
 ### `ngrok` First-Time Setup (A one-time action per computer)
 
-`ngrok` needs to be installed on your computer and linked to a free account.
+`ngrok` needs your personal "authtoken" to work. This is a free, one-time setup.
 
-**Step 1: Install `ngrok` (if you haven't already)**
+**Step 1: Install `ngrok` via `npm`**
 
-If you are on Ubuntu (like in your terminal example), the easiest way is with `snap`:
+Run this command in your project folder. This downloads `ngrok` locally into your project.
 ```bash
-sudo snap install ngrok
+npm install
 ```
-For other systems, follow the official instructions at [ngrok.com](https://ngrok.com/download). You do not need to install it via `npm`.
 
 **Step 2: Connect Your Account**
 
-This is the step that was causing the error. It's crucial to run this command **without `sudo`**.
+This is the crucial step. You will register `ngrok` for your user account.
 
 1.  **Sign Up:** Go to [https://dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup) and create a free account.
 2.  **Get Your Authtoken:** Go to the "Your Authtoken" page: [https://dashboard.ngrok.com/get-started/your-authtoken](https://dashboard.ngrok.com/get-started/your-authtoken).
 3.  **Copy the Command:** You will see a command that looks like this: `ngrok config add-authtoken <YOUR_PERSONAL_TOKEN>`. Copy this entire line.
 4.  **Run the Command in Your Terminal (WITHOUT `sudo`!):**
-    *   Open a new terminal window.
+    *   Open a new terminal window in your project folder.
     *   Paste the command you copied and press Enter. **Do NOT use `sudo`**.
 
     ```bash
     # Run this command exactly as copied, without sudo at the beginning
     ngrok config add-authtoken <YOUR_PERSONAL_TOKEN>
     ```
-    Running it with `sudo` saves the token for the `root` user, but you run the app as your own user (`developer`), which is why it previously failed. Running it without `sudo` saves it for the correct user.
+    Running it **without `sudo`** is critical because it saves the key for your current user (`developer`). Running it with `sudo` saves it for the `root` user, which causes the authentication error you've been seeing.
 
 This command saves your token to a configuration file in your user's home directory. You will not need to do this again on this machine.
 
