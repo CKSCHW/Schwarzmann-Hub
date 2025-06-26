@@ -2,10 +2,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
-import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser } from '@/types';
+import { adminDb, adminAuth, getCurrentUser } from '@/lib/firebase-admin';
+import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser, UserGroup } from '@/types';
 import https from 'https';
-import { sendPushNotification } from './notificationActions';
+import axios from 'axios';
+import { sendAndSavePushNotification } from './notificationActions';
 
 // WARNING: This is a workaround for local development environments with SSL certificate issues.
 // Do NOT use this in a production environment as it bypasses SSL certificate validation,
@@ -44,12 +45,9 @@ async function fetchWpImageUrlById(id: string): Promise<string | null> {
 
     for (const url of urls) {
         try {
-            const response = await fetch(url, { next: { revalidate: 0 }, agent: insecureAgent });
-            if (response.ok) {
-                const media = await response.json();
-                if (media.source_url) {
-                    return media.source_url;
-                }
+            const response = await axios.get(url, { httpsAgent: insecureAgent, timeout: 5000 });
+            if (response.data && response.data.source_url) {
+                return response.data.source_url;
             }
         } catch (error) {
             console.warn(`Failed to fetch media from ${url}, trying next fallback.`);
@@ -79,7 +77,7 @@ async function processShortcodes(content: string): Promise<string> {
             if (imageUrl) {
                 // Replace the shortcode with a standard HTML <img> tag.
                 // The 'prose' Tailwind classes will style this automatically.
-                const imgTag = `<img src="${imageUrl}" alt="Bild aus Artikel" class="mx-auto my-4 rounded-lg shadow-md" />`;
+                const imgTag = `<img src="${imageUrl}" alt="Bild aus Artikel" class="mx-auto my-4 rounded-lg shadow-md w-full h-auto" />`;
                 processedContent = processedContent.replace(shortcode, imgTag);
             } else {
                  // If the image URL couldn't be fetched, remove the shortcode to avoid displaying it as text.
@@ -122,12 +120,8 @@ export async function importWordPressArticles() {
   for (const source of wpSources) {
       let wpArticles;
       try {
-        const response = await fetch(source.url, { next: { revalidate: 0 }, agent: insecureAgent }); // No caching for imports
-        if (!response.ok) {
-            console.error(`Failed to fetch WordPress articles from ${source.name}. Status: ${response.status}`);
-            continue; // Skip to the next source
-        }
-        wpArticles = await response.json();
+        const response = await axios.get(source.url, { httpsAgent: insecureAgent, timeout: 10000 });
+        wpArticles = response.data;
       } catch (error) {
         console.error(`Error fetching from ${source.name}:`, error);
         continue;
@@ -190,8 +184,8 @@ export async function importWordPressArticles() {
   
   if(newArticleTitles.length > 0) {
     const notificationTitle = newArticleTitles.length > 1 ? `${newArticleTitles.length} neue Artikel verfügbar` : `Neuer Artikel: ${newArticleTitles[0]}`;
-    const notificationBody = newArticleTitles.length > 1 ? `Neuigkeiten von ${wpSources.map(s => s.author).join(' & ')}.` : 'Jetzt in der App lesen.';
-    await sendPushNotification({
+    const notificationBody = newArticleTitles.length > 1 ? `Neuigkeiten von den Webseiten.` : 'Jetzt in der App lesen.';
+    await sendAndSavePushNotification({
         title: notificationTitle,
         body: notificationBody,
         url: '/news'
@@ -205,31 +199,74 @@ export async function importWordPressArticles() {
   return { newCount: totalNewArticles, updatedCount: totalUpdatedArticles };
 }
 
+
+// Helper to verify admin privileges
+async function verifyAdmin() {
+    const user = await getCurrentUser();
+    if (!user || user.isAdmin !== true) {
+        throw new Error('Unauthorized');
+    }
+}
+
 // Action to create a new article
 export async function createArticle(articleData: Omit<NewsArticle, 'id' | 'date'>): Promise<NewsArticle> {
+  await verifyAdmin();
   const articlesCollection = adminDb.collection('articles');
   
-  const newArticle = {
+  const newArticleData = {
       ...articleData,
       date: new Date().toISOString(),
       source: 'internal', // Explicitly set source for internal articles
   };
 
-  const docRef = await articlesCollection.add(newArticle);
-  const newArticleWithId = { ...newArticle, id: docRef.id };
+  const docRef = await articlesCollection.add(newArticleData);
+  const newArticle = { ...newArticleData, id: docRef.id };
 
-  await sendPushNotification({
-    title: `Neue interne Meldung`,
-    body: newArticle.title,
-    url: `/news/${newArticleWithId.id}`
+  // Send push notification
+  await sendAndSavePushNotification({
+      title: 'Neue interne Meldung',
+      body: newArticle.title,
+      url: `/news/${newArticle.id}`,
   });
 
   revalidatePath('/');
   revalidatePath('/admin');
-  revalidatePath('/news');
+  revalidatePath('/news'); // Ensure the news list page is updated
   
-  return newArticleWithId;
+  return newArticle;
 }
+
+// Action to delete a self-created article
+export async function deleteArticle(articleId: string) {
+    await verifyAdmin();
+
+    const articleRef = adminDb.collection('articles').doc(articleId);
+    const readReceiptsCollection = adminDb.collection('readReceipts');
+    
+    const articleDoc = await articleRef.get();
+    if (!articleDoc.exists || articleDoc.data()?.source !== 'internal') {
+        throw new Error('This article cannot be deleted.');
+    }
+
+    const batch = adminDb.batch();
+    
+    // 1. Delete the article itself
+    batch.delete(articleRef);
+
+    // 2. Find and delete all associated read receipts
+    const receiptsQuery = readReceiptsCollection.where('articleId', '==', articleId);
+    const receiptsSnapshot = await receiptsQuery.get();
+    receiptsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+
+    revalidatePath('/');
+    revalidatePath('/admin');
+    revalidatePath('/news');
+}
+
 
 // Action to get articles with their read counts for the admin dashboard
 export async function getNewsArticlesWithReadCounts() {
@@ -276,15 +313,60 @@ export async function getAppointments(): Promise<Appointment[]> {
 
 // Action to create a new appointment
 export async function createAppointment(appointmentData: Omit<Appointment, 'id'>): Promise<Appointment> {
+    await verifyAdmin();
     const docRef = await adminDb.collection('appointments').add(appointmentData);
     revalidatePath('/admin');
     revalidatePath('/dashboard');
     return { id: docRef.id, ...appointmentData };
 }
 
+// Action to update an existing appointment
+export async function updateAppointment(id: string, appointmentData: Omit<Appointment, 'id'>): Promise<Appointment> {
+    await verifyAdmin();
+    const appointmentRef = adminDb.collection('appointments').doc(id);
+    await appointmentRef.update(appointmentData);
+    revalidatePath('/admin');
+    revalidatePath('/dashboard');
+    return { id: id, ...appointmentData };
+}
+
 // Action to delete an appointment
 export async function deleteAppointment(id: string): Promise<void> {
+    await verifyAdmin();
     await adminDb.collection('appointments').doc(id).delete();
     revalidatePath('/admin');
     revalidatePath('/dashboard');
+}
+
+
+// USER & GROUP MANAGEMENT
+export async function getUsersWithGroups(): Promise<SimpleUser[]> {
+  const listUsersResult = await adminAuth.listUsers();
+  const users: SimpleUser[] = listUsersResult.users.map(userRecord => {
+    const customClaims = (userRecord.customClaims || {}) as { role?: string; groups?: UserGroup[] };
+    return {
+      uid: userRecord.uid,
+      email: userRecord.email,
+      displayName: userRecord.displayName,
+      photoURL: userRecord.photoURL,
+      isAdmin: customClaims.role === 'admin',
+      groups: customClaims.groups || [],
+    };
+  });
+  return users;
+}
+
+export async function updateUserGroups(uid: string, groups: UserGroup[]): Promise<void> {
+    await verifyAdmin();
+    const user = await adminAuth.getUser(uid);
+    const existingClaims = user.customClaims || {};
+
+    // Preserve existing claims like 'role'
+    const newClaims = {
+        ...existingClaims,
+        groups: groups,
+    };
+
+    await adminAuth.setCustomUserClaims(uid, newClaims);
+    revalidatePath('/admin');
 }

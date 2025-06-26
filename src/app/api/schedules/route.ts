@@ -1,7 +1,13 @@
 
 import { NextResponse } from 'next/server';
-import { mockSchedules } from '@/lib/mockData';
+import { getSchedules } from '@/actions/scheduleActions';
 
 export async function GET() {
-  return NextResponse.json(mockSchedules);
+  try {
+    const schedules = await getSchedules();
+    return NextResponse.json(schedules);
+  } catch (error) {
+    console.error("API Error fetching schedules:", error);
+    return NextResponse.json({ error: "Failed to fetch schedules" }, { status: 500 });
+  }
 }

@@ -33,11 +33,12 @@ export interface Appointment {
 
 
 export interface ScheduleFile {
-  id:string;
+  id: string;
   name: string;
-  dateAdded: string;
-  url: string; // URL to the PDF file
-  size?: string; // Optional file size
+  dateAdded: string; // ISO string
+  url: string; // Public download URL
+  size: number; // in bytes
+  filePath: string; // path in local filesystem
 }
 
 export interface ReadReceipt {
@@ -53,15 +54,67 @@ export interface SimpleUser {
     email?: string;
     displayName?: string;
     photoURL?: string;
+    isAdmin?: boolean;
+    groups?: UserGroup[];
 }
 
 export interface ReadReceiptWithUser extends ReadReceipt {
     user?: SimpleUser;
 }
 
+export interface ScheduleDownloadReceipt {
+  id: string; // e.g., userId_scheduleId_timestamp
+  userId: string;
+  scheduleId: string;
+  scheduleName: string; // For easy display
+  downloadedAt: string; // ISO string
+}
+
+export interface ScheduleDownloadReceiptWithUser extends ScheduleDownloadReceipt {
+    user?: SimpleUser;
+}
+
+
+// --- Push Notification & System Types ---
+
 export interface PushNotificationPayload {
     title: string;
     body: string;
     icon?: string;
     url?: string;
+    notificationId?: string;
+}
+
+// This represents the plain object version of a PushSubscription, suitable for JSON serialization
+export interface StoredPushSubscription {
+  endpoint: string;
+  expirationTime?: number | null;
+  keys: {
+    p256dh: string;
+    auth: string;
+  };
+  userId: string;
+}
+
+export interface Notification {
+  id: string;
+  title:string;
+  body: string;
+  url: string;
+  icon?: string;
+  createdAt: string; // ISO string
+}
+
+export interface NotificationReceipt {
+  id: string; // compound key userId_notificationId
+  userId: string;
+  notificationId: string;
+  readAt?: string; // ISO string
+  clickedAt?: string; // ISO string
+  isDeleted?: boolean;
+}
+
+export interface NotificationWithStatus extends Notification {
+  isRead: boolean;
+  isClicked: boolean;
 }
