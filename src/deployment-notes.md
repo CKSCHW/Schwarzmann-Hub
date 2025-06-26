@@ -143,6 +143,19 @@ If you start the app and still see the `CRITICAL CONFIGURATION ERROR`, it is **1
 
 ---
 
+### 4.5 (One-Time Setup) Activate Firebase Storage
+
+Before you can upload files (like weekly schedules), you must enable the Storage service in your Firebase project. This only needs to be done once.
+
+1.  Go to the **Firebase Console** and select your `work-news-hub` project.
+2.  In the left menu, go to **Build > Storage**.
+3.  Click the **"Get started"** button.
+4.  Follow the on-screen prompts. You can accept the default security rules for now (they allow authenticated users to read/write).
+5.  Choose the default cloud storage location when prompted.
+
+Once this is complete, the `The specified bucket does not exist` error will be resolved.
+
+
 ### 5. Start the Application with PM2
 
 PM2 will run your app in the background and ensure it restarts automatically if it crashes.
@@ -224,86 +237,3 @@ To grant a user admin privileges, you need to set a "custom claim" on their acco
     npm run set-admin -- user-email@example.com
     ```
 4.  You should see a success message. The next time this user logs in, they will have access to the Admin Dashboard.
-
-### 8. (Recommended) Enable HTTPS with a Free SSL Certificate
-
-This final step secures your application by enabling HTTPS. We will use **Let's Encrypt** to get a free SSL certificate and **Certbot** to automate the process.
-
-**A. Install Certbot**
-
-Certbot is the tool that fetches the certificate and configures Nginx for you.
-
-```bash
-# Update your package list
-sudo apt update
-# Install certbot and its Nginx plugin
-sudo apt install certbot python3-certbot-nginx -y
-```
-
-**B. Obtain the SSL Certificate**
-
-Run Certbot and tell it to configure Nginx. Make sure your domain name is pointing to your server's IP address before running this.
-
-```bash
-# Replace your_domain.com with your actual domain
-sudo certbot --nginx -d your_domain.com
-```
-
-Certbot will ask you a few questions:
-1.  **Enter an email address:** This is for renewal notices and security alerts.
-2.  **Agree to the Terms of Service:** Read them and press `Y` to agree.
-3.  **Share email with EFF:** You can choose `Y` or `N`.
-4.  **Redirect HTTP to HTTPS:** It will ask if you want to redirect all HTTP traffic to HTTPS. **You should choose option 2 (Redirect).** This is the most secure option.
-
-If successful, Certbot will automatically edit your `/etc/nginx/sites-available/my-app` file to add the SSL configuration and then restart Nginx. Your site will now be served over HTTPS!
-
-**C. Verify Automatic Renewal**
-
-Let's Encrypt certificates are valid for 90 days. Certbot automatically sets up a task on your server to renew them before they expire. You can test the renewal process with this command:
-
-```bash
-sudo certbot renew --dry-run
-```
-
-If it completes without errors, you're all set. You now have a secure, deployed Next.js application.
-
----
-
-### 🚨 Deployment Troubleshooting 🚨
-
-#### Problem: Network Timeout when accessing `https://<YOUR_IP_ADDRESS>`
-
-If you see a "Network Timeout Error" when you try to access your app via `https://192.168.20.78` or a similar IP address, this is expected behavior. Here's why and how to fix it.
-
-*   **The Cause:** Standard SSL certificates (for `https://`) are issued for **domain names** (like `app.your-company.com`), not for IP addresses. Your browser cannot establish a secure HTTPS connection to an IP address, which results in a timeout. Nginx is configured for HTTPS but the browser can't complete the handshake.
-
-*   **The Solution:**
-
-    1.  **For local network testing (using an IP address):** Always use **HTTP**.
-        *   Correct: `http://192.168.20.78`
-        *   Incorrect: `https://192.168.20.78`
-
-    2.  **For public access (using a domain name):** Always use **HTTPS** after you have set up a domain and run Certbot.
-        *   Correct: `https://app.your-company.com`
-        *   Incorrect: `http://app.your-company.com` (Certbot should automatically redirect this)
-
-#### Problem: Connection Refused or Still Can't Access the App
-
-This usually means a firewall is blocking the connection. You need to allow traffic for Nginx.
-
-1.  **Check Firewall Status (UFW - Uncomplicated Firewall):**
-    ```bash
-    sudo ufw status
-    ```
-    If it says `Status: active`, you need to add rules. If it's `inactive`, the firewall is not the problem.
-
-2.  **Allow Nginx Traffic:** Nginx registers a few profiles with `ufw`. 'Nginx Full' allows both HTTP (port 80) and HTTPS (port 443) traffic.
-    ```bash
-    sudo ufw allow 'Nginx Full'
-    ```
-
-3.  **Verify the Rule:**
-    ```bash
-    sudo ufw status
-    ```
-    You should now see `Nginx Full` in the list of allowed applications. Your site should now be accessible.
