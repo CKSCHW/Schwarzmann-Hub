@@ -1,5 +1,5 @@
 
-import SurveyForm from "../SurveyForm";
+import SurveyForm from "../../SurveyForm";
 import { getUsersWithGroups } from '@/actions/adminActions';
 import { getSurveyForEditing } from '@/actions/surveyActions';
 import { getCurrentUser } from "@/lib/firebase-admin";
