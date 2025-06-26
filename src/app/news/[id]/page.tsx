@@ -22,7 +22,7 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
       {user && <MarkAsReadClientTrigger articleId={params.id} userId={user.uid} />}
       <article className="max-w-4xl mx-auto">
         <header className="mb-8">
-          <h1 className="text-4xl font-headline font-bold mb-3 leading-tight">{article.title}</h1>
+          <h1 className="text-3xl md:text-4xl font-headline font-bold mb-3 leading-tight">{article.title}</h1>
           <div className="flex items-center text-muted-foreground text-sm">
             <div className="flex items-center">
               <CalendarDays className="mr-2 h-4 w-4" />

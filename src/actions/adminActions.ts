@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { adminDb, adminAuth } from '@/lib/firebase-admin';
 import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser, UserGroup } from '@/types';
 import https from 'https';
+import axios from 'axios';
 import { sendAndSavePushNotification } from './notificationActions';
 
 // WARNING: This is a workaround for local development environments with SSL certificate issues.
@@ -44,12 +45,9 @@ async function fetchWpImageUrlById(id: string): Promise<string | null> {
 
     for (const url of urls) {
         try {
-            const response = await fetch(url, { next: { revalidate: 0 }, agent: insecureAgent });
-            if (response.ok) {
-                const media = await response.json();
-                if (media.source_url) {
-                    return media.source_url;
-                }
+            const response = await axios.get(url, { httpsAgent: insecureAgent, timeout: 5000 });
+            if (response.data && response.data.source_url) {
+                return response.data.source_url;
             }
         } catch (error) {
             console.warn(`Failed to fetch media from ${url}, trying next fallback.`);
@@ -79,7 +77,7 @@ async function processShortcodes(content: string): Promise<string> {
             if (imageUrl) {
                 // Replace the shortcode with a standard HTML <img> tag.
                 // The 'prose' Tailwind classes will style this automatically.
-                const imgTag = `<img src="${imageUrl}" alt="Bild aus Artikel" class="mx-auto my-4 rounded-lg shadow-md" />`;
+                const imgTag = `<img src="${imageUrl}" alt="Bild aus Artikel" class="mx-auto my-4 rounded-lg shadow-md w-full h-auto" />`;
                 processedContent = processedContent.replace(shortcode, imgTag);
             } else {
                  // If the image URL couldn't be fetched, remove the shortcode to avoid displaying it as text.
@@ -122,12 +120,8 @@ export async function importWordPressArticles() {
   for (const source of wpSources) {
       let wpArticles;
       try {
-        const response = await fetch(source.url, { next: { revalidate: 0 }, agent: insecureAgent }); // No caching for imports
-        if (!response.ok) {
-            console.error(`Failed to fetch WordPress articles from ${source.name}. Status: ${response.status}`);
-            continue; // Skip to the next source
-        }
-        wpArticles = await response.json();
+        const response = await axios.get(source.url, { httpsAgent: insecureAgent, timeout: 10000 });
+        wpArticles = response.data;
       } catch (error) {
         console.error(`Error fetching from ${source.name}:`, error);
         continue;
