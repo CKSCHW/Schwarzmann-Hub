@@ -31,7 +31,7 @@ export const adminAuth = getAuth(adminApp);
 // Helper function to get the current user on the server side
 export async function getCurrentUser(): Promise<SimpleUser | null> {
   headers(); // This forces the function to be dynamic
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionCookie = cookieStore.get('__session');
 
   if (!sessionCookie?.value) {
