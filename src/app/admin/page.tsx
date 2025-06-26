@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/firebase-admin';
 import AdminDashboardClient from './AdminDashboardClient';
-import { getNewsArticlesWithReadCounts, getAppointments, getUsersWithGroups } from '@/actions/adminActions';
+import * as adminActions from '@/actions/adminActions';
 import AppointmentManager from './AppointmentManager';
 import UserGroupManager from './UserGroupManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,9 +22,9 @@ export default async function AdminPage() {
     appointments,
     usersWithGroups
   ] = await Promise.all([
-    getNewsArticlesWithReadCounts(),
-    getAppointments(),
-    getUsersWithGroups()
+    adminActions.getNewsArticlesWithReadCounts(),
+    adminActions.getAppointments(),
+    adminActions.getUsersWithGroups()
   ]);
 
   return (
