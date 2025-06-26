@@ -2,12 +2,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useForm, useFieldArray, Controller } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -21,36 +21,43 @@ import { questionTypes } from '@/types';
 import { createSurvey, updateSurvey } from '@/actions/surveyActions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+const questionSchema = z.object({
+    id: z.string(),
+    text: z.string().min(1, 'Die Frage darf nicht leer sein.'),
+    type: z.enum(questionTypes, { required_error: "Bitte einen Fragetyp auswählen." }),
+    options: z.array(z.object({
+        text: z.string() // Validated conditionally below
+    })).optional(),
+});
+
 const surveySchema = z.object({
   title: z.string().min(5, 'Titel muss mindestens 5 Zeichen haben.'),
   description: z.string().min(10, 'Beschreibung muss mindestens 10 Zeichen haben.'),
-  questions: z.array(z.object({
-    id: z.string(),
-    text: z.string().min(1, 'Frage darf nicht leer sein.'),
-    type: z.enum(questionTypes, { required_error: "Bitte Fragetyp auswählen." }),
-    options: z.array(z.object({ text: z.string().min(1, 'Option darf nicht leer sein.') })).optional()
-  })).min(1, 'Mindestens eine Frage ist erforderlich.'),
+  questions: z.array(questionSchema).min(1, 'Mindestens eine Frage ist erforderlich.'),
   assignedUserIds: z.array(z.string()).min(1, 'Weisen Sie mindestens einen Benutzer zu.'),
 }).superRefine((data, ctx) => {
-  data.questions.forEach((q, index) => {
-    if (q.type === 'multiple-choice') {
-      if (!q.options || q.options.length < 2) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Mindestens zwei Optionen erforderlich.',
-          path: [`questions`, index, 'options'],
-        });
-      }
-       if (q.options?.some(opt => !opt.text)) {
-         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'Alle Optionen müssen Text enthalten.',
-          path: [`questions`, index, 'options'],
-        });
-      }
-    }
-  });
+    data.questions.forEach((q, index) => {
+        if (q.type === 'multiple-choice') {
+            if (!q.options || q.options.length < 2) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message: "Mindestens zwei Optionen sind erforderlich.",
+                    path: [`questions`, index, `options`],
+                });
+            }
+            q.options?.forEach((opt, optIndex) => {
+                if (opt.text.trim() === '') {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message: "Option darf nicht leer sein.",
+                        path: [`questions`, index, `options`, optIndex, 'text'],
+                    });
+                }
+            });
+        }
+    });
 });
+
 
 type SurveyFormValues = z.infer<typeof surveySchema>;
 
@@ -89,7 +96,9 @@ const QuestionOptionsFieldArray = ({ control, questionIndex }: { control: any, q
     );
 }
 
-const SurveyQuestionItem = ({ control, index, remove, fieldsLength, questionType }: { control: any, index: number, remove: (index: number) => void, fieldsLength: number, questionType: string }) => {
+const SurveyQuestionItem = ({ control, index, remove, fieldsLength }: { control: any, index: number, remove: (index: number) => void, fieldsLength: number }) => {
+    const questionType = useWatch({ control, name: `questions.${index}.type` });
+    
     return (
         <div className="p-4 border rounded-lg space-y-2 bg-muted/30">
             <div className="flex items-start gap-2">
@@ -137,7 +146,7 @@ const SurveyQuestionItem = ({ control, index, remove, fieldsLength, questionType
     );
 };
 
-export default function SurveyForm({ mode, initialData, allUsers, currentUser }: SurveyFormProps) {
+export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -157,14 +166,13 @@ export default function SurveyForm({ mode, initialData, allUsers, currentUser }:
   const form = useForm<SurveyFormValues>({
     resolver: zodResolver(surveySchema),
     defaultValues,
+    mode: 'onChange', // Validate on change to give instant feedback
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: 'questions',
   });
-  
-  const questionTypesWatch = form.watch('questions');
 
   const onSubmit = async (data: SurveyFormValues) => {
     setIsSubmitting(true);
@@ -174,7 +182,7 @@ export default function SurveyForm({ mode, initialData, allUsers, currentUser }:
             id: q.id,
             text: q.text,
             type: q.type,
-            options: q.type === 'multiple-choice' ? q.options?.map(opt => opt.text) : [],
+            options: q.type === 'multiple-choice' ? q.options?.map(opt => opt.text).filter(Boolean) : [],
         })),
     };
     
@@ -209,7 +217,10 @@ export default function SurveyForm({ mode, initialData, allUsers, currentUser }:
             </div>
 
             <Card>
-                <CardHeader><CardTitle>Fragen</CardTitle></CardHeader>
+                <CardHeader>
+                    <CardTitle>Fragen</CardTitle>
+                    <CardDescription>Fügen Sie die Fragen für Ihre Umfrage hinzu und konfigurieren Sie sie.</CardDescription>
+                </CardHeader>
                 <CardContent className="space-y-4">
                     {fields.map((field, index) => (
                        <SurveyQuestionItem
@@ -218,17 +229,20 @@ export default function SurveyForm({ mode, initialData, allUsers, currentUser }:
                             index={index}
                             remove={remove}
                             fieldsLength={fields.length}
-                            questionType={questionTypesWatch[index]?.type}
                         />
                     ))}
                     <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `q-${Date.now()}`, text: '', type: 'rating', options: [{text: ''}, {text: ''}] })} className="mt-2">
                         <PlusCircle className="mr-2 h-4 w-4" /> Frage hinzufügen
                     </Button>
+                     <FormMessage>{form.formState.errors.questions?.message}</FormMessage>
                 </CardContent>
             </Card>
 
             <Card>
-                <CardHeader><CardTitle>Teilnehmer</CardTitle></CardHeader>
+                <CardHeader>
+                    <CardTitle>Teilnehmer</CardTitle>
+                    <CardDescription>Wählen Sie aus, welche Mitarbeiter an dieser Umfrage teilnehmen sollen.</CardDescription>
+                </CardHeader>
                 <CardContent>
                      <FormField control={form.control} name="assignedUserIds" render={({ field }) => (
                       <FormItem>
@@ -290,3 +304,5 @@ export default function SurveyForm({ mode, initialData, allUsers, currentUser }:
     </Card>
   );
 }
+
+    
