@@ -11,11 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Trash2, Loader2, Users, GripVertical, Save } from 'lucide-react';
+import { PlusCircle, Trash2, Loader2, Users, GripVertical, Save, Search } from 'lucide-react';
 import type { Survey, SimpleUser } from '@/types';
 import { questionTypes } from '@/types';
 import { createSurvey, updateSurvey } from '@/actions/surveyActions';
@@ -148,6 +148,8 @@ const SurveyQuestionItem = ({ control, index, remove, fieldsLength }: { control:
 
 export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isParticipantDialogOpen, setIsParticipantDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const router = useRouter();
   const { toast } = useToast();
 
@@ -159,14 +161,14 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
       id: q.id,
       text: q.text,
       type: q.type,
-      options: q.options?.map(opt => ({ text: opt })) || [{ text: '' }, { text: '' }],
-    })) || [{ id: `q-${Date.now()}`, text: '', type: 'rating', options: [{ text: '' }, { text: '' }] }],
+      options: q.type === 'multiple-choice' ? (q.options?.map(opt => ({ text: opt })) || [{ text: '' }, { text: '' }]) : [],
+    })) || [{ id: `q-${Date.now()}`, text: '', type: 'rating', options: [] }],
   };
 
   const form = useForm<SurveyFormValues>({
     resolver: zodResolver(surveySchema),
     defaultValues,
-    mode: 'onChange', // Validate on change to give instant feedback
+    mode: 'onChange',
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -202,6 +204,13 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
     }
   };
 
+  const filteredUsers = allUsers.filter(user => {
+      const name = user.displayName?.toLowerCase() || '';
+      const email = user.email?.toLowerCase() || '';
+      const search = searchTerm.toLowerCase();
+      return name.includes(search) || email.includes(search);
+  });
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -231,10 +240,10 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
                             fieldsLength={fields.length}
                         />
                     ))}
-                    <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `q-${Date.now()}`, text: '', type: 'rating', options: [{text: ''}, {text: ''}] })} className="mt-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => append({ id: `q-${Date.now()}`, text: '', type: 'rating', options: [] })} className="mt-2">
                         <PlusCircle className="mr-2 h-4 w-4" /> Frage hinzufügen
                     </Button>
-                     <FormMessage>{form.formState.errors.questions?.message}</FormMessage>
+                     <FormMessage>{form.formState.errors.questions?.root?.message || form.formState.errors.questions?.message}</FormMessage>
                 </CardContent>
             </Card>
 
@@ -246,9 +255,9 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
                 <CardContent>
                      <FormField control={form.control} name="assignedUserIds" render={({ field }) => (
                       <FormItem>
-                        <Dialog>
+                        <Dialog open={isParticipantDialogOpen} onOpenChange={setIsParticipantDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button type="button" variant="outline">
+                                <Button type="button" variant="outline" onClick={() => setIsParticipantDialogOpen(true)}>
                                     <Users className="mr-2 h-4 w-4" />
                                     Teilnehmer auswählen
                                 </Button>
@@ -258,29 +267,47 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
                                     <DialogTitle>Teilnehmer auswählen</DialogTitle>
                                     <DialogDescription>Wählen Sie die Benutzer aus, die an dieser Umfrage teilnehmen sollen.</DialogDescription>
                                 </DialogHeader>
-                                <ScrollArea className="h-72">
-                                <div className="p-4 space-y-2">
-                                {allUsers.map((user) => (
-                                    <div key={user.uid} className="flex items-center space-x-2">
-                                    <Checkbox
-                                        id={`user-${user.uid}`}
-                                        checked={field.value?.includes(user.uid)}
-                                        onCheckedChange={(checked) => {
-                                            const currentAssigned = field.value || [];
-                                            if (checked) {
-                                                field.onChange([...currentAssigned, user.uid]);
-                                            } else {
-                                                field.onChange(currentAssigned.filter(id => id !== user.uid));
-                                            }
-                                        }}
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Suchen nach Name oder E-Mail..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="pl-10"
                                     />
-                                    <label htmlFor={`user-${user.uid}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                        {user.displayName || user.email}
-                                    </label>
-                                    </div>
-                                ))}
                                 </div>
+                                <ScrollArea className="h-72 border rounded-md">
+                                    <div className="p-4 space-y-2">
+                                    {filteredUsers.length > 0 ? filteredUsers.map((user) => (
+                                        <div key={user.uid} className="flex items-center space-x-2">
+                                        <Checkbox
+                                            id={`user-${user.uid}`}
+                                            checked={field.value?.includes(user.uid)}
+                                            onCheckedChange={(checked) => {
+                                                const currentAssigned = field.value || [];
+                                                if (checked) {
+                                                    field.onChange([...currentAssigned, user.uid]);
+                                                } else {
+                                                    field.onChange(currentAssigned.filter(id => id !== user.uid));
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor={`user-${user.uid}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                            {user.displayName || user.email}
+                                        </label>
+                                        </div>
+                                    )) : (
+                                        <p className="p-4 text-center text-sm text-muted-foreground">
+                                            Keine Benutzer für die Suche gefunden.
+                                        </p>
+                                    )}
+                                    </div>
                                 </ScrollArea>
+                                <DialogFooter>
+                                    <Button type="button" onClick={() => setIsParticipantDialogOpen(false)}>
+                                        Auswahl bestätigen
+                                    </Button>
+                                </DialogFooter>
                             </DialogContent>
                         </Dialog>
                         <div className="pt-2 text-sm text-muted-foreground">
@@ -304,5 +331,3 @@ export default function SurveyForm({ mode, initialData, allUsers }: SurveyFormPr
     </Card>
   );
 }
-
-    
