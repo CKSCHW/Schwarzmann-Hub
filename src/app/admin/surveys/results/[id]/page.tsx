@@ -1,8 +1,7 @@
-
 import { getSurveyResults } from "@/actions/surveyActions";
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from "@/lib/firebase-admin";
-import SurveyResultsClient from "./SurveyResultsClient";
+import SurveyResultsClient from "../SurveyResultsClient";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
