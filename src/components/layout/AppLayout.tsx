@@ -64,7 +64,7 @@ const AppHeader = () => {
 const UserMenu = () => {
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
-  const { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, loading, isIos, isPwa } = usePushManager();
+  const { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, loading, isIos, isSupported } = usePushManager();
   const { toast } = useToast();
 
   const handleLogout = async () => {
@@ -73,8 +73,8 @@ const UserMenu = () => {
   };
 
   const handleToggleSubscription = () => {
-    // On iOS, guide the user to add the app to the home screen first.
-    if (isIos && !isPwa && !isSubscribed) {
+    // On iOS, if push is not supported, it means it's not a PWA. Guide the user.
+    if (isIos && !isSupported && !isSubscribed) {
       toast({
         title: 'Hinweis für iPhone-Nutzer',
         description: 'Um Benachrichtigungen zu erhalten, fügen Sie diese App bitte zuerst zu Ihrem Home-Bildschirm hinzu (über das "Teilen"-Menü). Öffnen Sie die App dann vom Home-Bildschirm und aktivieren Sie die Benachrichtigungen hier erneut.',
