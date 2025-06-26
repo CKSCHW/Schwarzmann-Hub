@@ -25,6 +25,7 @@ import { useAuth } from "@/context/AuthContext";
 import NotificationBell from "./NotificationBell";
 import { markNotificationAsClicked } from "@/actions/notificationActions";
 import { usePushManager } from "@/hooks/usePushManager";
+import { useToast } from "@/hooks/use-toast";
 
 type NavItem = {
   href: string;
@@ -63,7 +64,8 @@ const AppHeader = () => {
 const UserMenu = () => {
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
-  const { isSubscribed, subscribeToPush, unsubscribeFromPush, isSupported, permission, loading } = usePushManager();
+  const { isSubscribed, subscribeToPush, unsubscribeFromPush, isSupported, permission, loading, isIos, isPwa } = usePushManager();
+  const { toast } = useToast();
 
   const handleLogout = async () => {
     await logout();
@@ -71,6 +73,16 @@ const UserMenu = () => {
   };
 
   const handleToggleSubscription = () => {
+    // On iOS, guide the user to add the app to the home screen first.
+    if (isIos && !isPwa && !isSubscribed) {
+      toast({
+        title: 'Hinweis für iPhone-Nutzer',
+        description: 'Um Benachrichtigungen zu erhalten, fügen Sie diese App bitte zuerst zu Ihrem Home-Bildschirm hinzu (über das "Teilen"-Menü). Öffnen Sie die App dann vom Home-Bildschirm und aktivieren Sie die Benachrichtigungen hier erneut.',
+        duration: 12000,
+      });
+      return;
+    }
+
     if (isSubscribed) {
       unsubscribeFromPush();
     } else {

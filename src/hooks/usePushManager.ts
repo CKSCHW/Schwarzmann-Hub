@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -32,12 +31,23 @@ export function usePushManager() {
   const [isSupported, setIsSupported] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // New state for iOS / PWA detection
+  const [isIos, setIsIos] = useState(false);
+  const [isPwa, setIsPwa] = useState(false);
+
+
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
-      setIsSupported(true);
-      setPermission(Notification.permission);
-    } else {
-      setIsSupported(false);
+    if (typeof window !== 'undefined') {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        setIsSupported(true);
+        setPermission(Notification.permission);
+      } else {
+        setIsSupported(false);
+      }
+      
+      // Detect iOS and PWA mode
+      setIsIos(/iPad|iPhone|iPod/.test(navigator.userAgent));
+      setIsPwa(window.matchMedia('(display-mode: standalone)').matches);
     }
   }, []);
 
@@ -117,5 +127,5 @@ export function usePushManager() {
     }
   }, [subscription, user, toast]);
 
-  return { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, isSupported, loading };
+  return { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, isSupported, loading, isIos, isPwa };
 }
