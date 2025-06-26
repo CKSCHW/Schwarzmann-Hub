@@ -18,7 +18,7 @@ import {
   useSidebar
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Home, CalendarDays, LogOut, ShieldCheck, Newspaper, BellOff, BellRing, User } from "lucide-react";
+import { Home, CalendarDays, LogOut, ShieldCheck, Newspaper, BellOff, BellRing, User, ClipboardList } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
@@ -33,12 +33,14 @@ type NavItem = {
   icon: React.ElementType;
   match?: (pathname: string) => boolean;
   adminOnly?: boolean;
+  requiresAuth?: boolean;
 };
 
 const navItems: NavItem[] = [
   { href: "/", label: "Startseite", icon: Home, match: (pathname) => pathname === "/" },
   { href: "/news", label: "News", icon: Newspaper, match: (pathname) => pathname.startsWith("/news") },
   { href: "/schedule", label: "Wocheneinteilung", icon: CalendarDays },
+  { href: "/surveys", label: "Umfragen", icon: ClipboardList, match: (pathname) => pathname.startsWith("/surveys")},
   { href: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
 ];
 
@@ -92,7 +94,9 @@ const AppHeader = () => {
             </Link>
         </div>
         <div className="flex items-center gap-4">
-          <NotificationBell />
+          <Suspense fallback={<div />}>
+            <NotificationBell />
+          </Suspense>
           <UserMenu />
         </div>
       </div>
@@ -205,21 +209,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && pathname !== '/login') {
-    return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <Image
-            src="https://www.elektro-schwarzmann.at/wp-content/uploads/2022/05/Elektro_Schwarzmann_Logo.svg"
-            alt="Elektro Schwarzmann Logo"
-            width={240}
-            height={55}
-            unoptimized
-            className="animate-pulse"
-        />
-      </div>
-    );
-  }
-  
   if (!user && pathname === '/login') {
     return <>{children}</>;
   }
