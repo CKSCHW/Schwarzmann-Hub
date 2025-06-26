@@ -77,6 +77,22 @@ export async function updateSurvey(surveyId: string, surveyData: Omit<Survey, 'i
 
     await surveyRef.update(dataToUpdate);
 
+    // --- START of new notification logic ---
+    const existingUserIds = new Set(existingSurvey.assignedUserIds || []);
+    const newlyAssignedUserIds = surveyData.assignedUserIds.filter(id => !existingUserIds.has(id));
+
+    if (newlyAssignedUserIds.length > 0) {
+        await sendPushNotificationToUsers(
+            newlyAssignedUserIds,
+            {
+                title: 'Neue Umfrage für dich',
+                body: `Du wurdest zur Umfrage "${surveyData.title}" eingeladen.`,
+                url: `/surveys/${surveyId}`,
+            }
+        );
+    }
+    // --- END of new notification logic ---
+
     revalidatePath('/admin');
     revalidatePath(`/admin/surveys/edit/${surveyId}`);
     revalidatePath(`/surveys`);

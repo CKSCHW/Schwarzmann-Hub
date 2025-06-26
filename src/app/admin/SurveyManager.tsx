@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, Trash2, Loader2, Edit, PieChart, Copy } from 'lucide-react';
 import type { Survey } from '@/types';
 import { deleteSurvey, duplicateSurvey } from '@/actions/surveyActions';
-import { ToastAction } from '@/components/ui/toast';
 
 interface SurveyManagerProps {
   initialSurveys: Survey[];
@@ -42,19 +41,12 @@ export default function SurveyManager({ initialSurveys }: SurveyManagerProps) {
     try {
       const newSurvey = await duplicateSurvey(surveyId);
       
-      // Optimistically update the list of surveys and refresh server data
-      setSurveys(prev => [newSurvey, ...prev].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-      router.refresh();
-
       toast({
         title: 'Umfrage dupliziert',
-        description: `Die neue Umfrage "${newSurvey.title}" ist bereit zum Bearbeiten.`,
-        action: (
-          <ToastAction altText="Zur neuen Umfrage" asChild>
-            <Link href={`/admin/surveys/edit/${newSurvey.id}`}>Bearbeiten</Link>
-          </ToastAction>
-        ),
+        description: `Du wirst zur Bearbeitung von "${newSurvey.title}" weitergeleitet.`,
       });
+      router.push(`/admin/surveys/edit/${newSurvey.id}`);
+
     } catch (error: any) {
       toast({ title: 'Fehler beim Duplizieren', description: error.message, variant: 'destructive' });
     } finally {
