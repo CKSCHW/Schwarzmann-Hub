@@ -20,8 +20,10 @@ export default async function EditSurveyPage({ params }: { params: { id: string 
         redirect('/');
     }
 
+    const { id } = params;
+
     const [survey, allUsers] = await Promise.all([
-        getSurveyForEditing(params.id),
+        getSurveyForEditing(id),
         getUsersWithGroups()
     ]);
 
