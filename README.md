@@ -86,3 +86,26 @@ To test on your phone, you need **two terminal windows** running at the same tim
 `ngrok` will now display a public URL that looks like `https://<random-string>.ngrok-free.app`.
 
 **Use this `https://...` URL** to open the app on your phone. Because this connection is secure (HTTPS), you will be able to test the entire push notification workflow.
+
+### Testing the Production Build with `ngrok`
+
+Sometimes, you may want to test the optimized, production version of your app locally before deploying. The process is very similar:
+
+1.  **Build the app for production.** This command creates an optimized version of your app.
+    ```bash
+    npm run build
+    ```
+
+2.  **Start the production server** (in your first terminal).
+    ```bash
+    npm run start
+    ```
+    *This starts the production server, which also runs on `http://localhost:3000`.*
+
+3.  **Start the secure tunnel** (in your second terminal).
+    ```bash
+    npm run start:public
+    ```
+    *This new command does the same as `dev:public` but is named for clarity when testing production builds.*
+
+You will get a secure `https://...` URL from `ngrok` that you can use on your phone to test the fully built application.

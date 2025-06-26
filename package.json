@@ -9,6 +9,7 @@
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
     "start": "next start",
+    "start:public": "ngrok http 3000",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "set-admin": "node scripts/set-admin-claim.js",
