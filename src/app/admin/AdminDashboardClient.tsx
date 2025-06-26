@@ -13,8 +13,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Loader2, Newspaper, UploadCloud, Globe } from 'lucide-react';
+import { Eye, Loader2, Newspaper, UploadCloud, Globe, BellRing } from 'lucide-react';
 import { createArticle, importWordPressArticles } from '@/actions/adminActions';
+import { sendTestNotification } from '@/actions/notificationActions';
 import type { NewsArticle, ReadReceiptWithUser } from '@/types';
 
 const articleSchema = z.object({
@@ -42,6 +43,7 @@ export default function AdminDashboardClient({
   const [receipts, setReceipts] = useState<ReadReceiptWithUser[]>(initialReceipts);
   const [isCreating, setIsCreating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<ArticleFormValues>({
@@ -114,6 +116,26 @@ export default function AdminDashboardClient({
       setIsCreating(false);
     }
   };
+
+  const handleSendTestNotification = async () => {
+    setIsSendingTest(true);
+    try {
+      await sendTestNotification();
+      toast({
+        title: 'Test-Benachrichtigung gesendet',
+        description: 'Alle abonnierten Geräte sollten in Kürze eine Nachricht erhalten.',
+      });
+    } catch (error) {
+      toast({
+        title: 'Fehler beim Senden',
+        description: 'Die Test-Benachrichtigung konnte nicht gesendet werden.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
 
   const getReceiptsForArticle = (articleId: string) => {
     return receipts.filter((r) => r.articleId === articleId);
@@ -222,6 +244,27 @@ export default function AdminDashboardClient({
                 <p className="text-xs text-muted-foreground mt-2">
                     Sucht nach neuen Artikeln und aktualisiert bestehende.
                 </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BellRing className="h-5 w-5" />
+                Benachrichtigungen testen
+              </CardTitle>
+              <CardDescription>
+                Senden Sie eine Test-Benachrichtigung an alle abonnierten Geräte, um die Funktion zu prüfen.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleSendTestNotification} disabled={isSendingTest} className="w-full">
+                {isSendingTest ? (
+                  <Loader2 className="animate-spin mr-2" />
+                ) : (
+                  <BellRing className="mr-2" />
+                )}
+                Test-Benachrichtigung senden
+              </Button>
             </CardContent>
           </Card>
            <Card>

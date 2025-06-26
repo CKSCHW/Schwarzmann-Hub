@@ -102,6 +102,17 @@ export async function sendAndSavePushNotification(payload: Omit<Notification, 'i
     revalidatePath('/layout'); // To trigger re-fetch in the bell
 }
 
+// Action to send a test notification to all subscribed users.
+export async function sendTestNotification() {
+    await sendAndSavePushNotification({
+        title: "Test-Benachrichtigung",
+        body: "Dies ist eine Test-Nachricht vom Admin-Dashboard.",
+        url: "/",
+        icon: "https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-180x180.png"
+    });
+    return { success: true };
+}
+
 
 // Gets all notifications for a user, along with their read/clicked status.
 export async function getNotificationsForUser(userId: string): Promise<NotificationWithStatus[]> {
