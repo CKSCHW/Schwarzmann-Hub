@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { adminDb, adminStorage, getCurrentUser } from '@/lib/firebase-admin';
 import type { ScheduleFile } from '@/types';
 
+const BUCKET_NAME = 'work-news-hub.appspot.com';
+
 async function verifyAdmin() {
     const user = await getCurrentUser();
     if (!user || user.isAdmin !== true) {
@@ -31,7 +33,7 @@ export async function uploadSchedule(formData: FormData): Promise<{ success: boo
             return { success: false, message: 'Es sind nur PDF-Dateien erlaubt.' };
         }
         
-        const bucket = adminStorage.bucket();
+        const bucket = adminStorage.bucket(BUCKET_NAME);
         const filePath = `schedules/${Date.now()}-${file.name}`;
         const fileBuffer = Buffer.from(await file.arrayBuffer());
 
@@ -73,7 +75,7 @@ export async function deleteSchedule(scheduleId: string, filePath: string): Prom
      try {
         await verifyAdmin();
 
-        const bucket = adminStorage.bucket();
+        const bucket = adminStorage.bucket(BUCKET_NAME);
         
         // Find the document to delete to get the filePath
         const scheduleDoc = await adminDb.collection('schedules').where('id', '==', scheduleId).limit(1).get();
