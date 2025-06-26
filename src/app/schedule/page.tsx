@@ -15,7 +15,7 @@ export default async function SchedulePage() {
     <div className="space-y-8">
       <section aria-labelledby="schedule-title">
         <h1 id="schedule-title" className="text-3xl font-headline font-semibold mb-2">
-          Wochenpläne
+          Wocheneinteilung
         </h1>
         <p className="text-muted-foreground mb-6">
           Sehen und laden Sie die neuesten Wocheneinteilungen herunter.
