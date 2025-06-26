@@ -38,7 +38,7 @@ export interface ScheduleFile {
   dateAdded: string; // ISO string
   url: string; // Public download URL
   size: number; // in bytes
-  filePath: string; // path in firebase storage
+  filePath: string; // path in local filesystem
 }
 
 export interface ReadReceipt {
@@ -59,6 +59,18 @@ export interface SimpleUser {
 }
 
 export interface ReadReceiptWithUser extends ReadReceipt {
+    user?: SimpleUser;
+}
+
+export interface ScheduleDownloadReceipt {
+  id: string; // e.g., userId_scheduleId_timestamp
+  userId: string;
+  scheduleId: string;
+  scheduleName: string; // For easy display
+  downloadedAt: string; // ISO string
+}
+
+export interface ScheduleDownloadReceiptWithUser extends ScheduleDownloadReceipt {
     user?: SimpleUser;
 }
 

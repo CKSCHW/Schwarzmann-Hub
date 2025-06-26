@@ -1,15 +1,18 @@
 
 import { getCurrentUser } from '@/lib/firebase-admin';
-import { getSchedules } from '@/actions/scheduleActions';
+import { getSchedules, getScheduleDownloadReceipts } from '@/actions/scheduleActions';
 import ScheduleClient from './ScheduleClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function SchedulePage() {
   const user = await getCurrentUser();
-  const schedules = await getSchedules();
-  
   const isAdmin = user?.isAdmin ?? false;
+
+  const [schedules, downloadReceipts] = await Promise.all([
+    getSchedules(),
+    isAdmin ? getScheduleDownloadReceipts() : Promise.resolve([]),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -22,7 +25,11 @@ export default async function SchedulePage() {
         </p>
       </section>
       
-      <ScheduleClient initialSchedules={schedules} isAdmin={isAdmin} />
+      <ScheduleClient 
+        initialSchedules={schedules} 
+        isAdmin={isAdmin}
+        initialDownloadReceipts={downloadReceipts}
+      />
     </div>
   );
 }

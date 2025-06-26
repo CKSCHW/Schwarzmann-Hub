@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -99,7 +100,7 @@ export default async function DashboardPage() {
                 <CardFooter>
                     {latestSchedule ? (
                         <Button asChild className="w-full">
-                            <a href={latestSchedule.url} download target="_blank" rel="noopener noreferrer">
+                            <a href={`/api/schedules/download/${latestSchedule.id}`} download={latestSchedule.name}>
                                 <Download className="mr-2 h-4 w-4" />
                                 Herunterladen
                             </a>

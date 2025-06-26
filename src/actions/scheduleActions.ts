@@ -2,8 +2,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { adminDb, getCurrentUser } from '@/lib/firebase-admin';
-import type { ScheduleFile } from '@/types';
+import { adminDb, adminAuth, getCurrentUser } from '@/lib/firebase-admin';
+import type { ScheduleFile, ScheduleDownloadReceiptWithUser, SimpleUser } from '@/types';
 import { sendAndSavePushNotification } from './notificationActions';
 import fs from 'fs/promises';
 import path from 'path';
@@ -50,7 +50,7 @@ export async function uploadSchedule(formData: FormData): Promise<{ success: boo
 
         const newSchedule: Omit<ScheduleFile, 'id'> = {
             name: file.name,
-            filePath: localFilePath, // Store absolute path for server-side deletion
+            filePath: localFilePath, // Store absolute path for server-side operations
             url: publicUrl, // Store public URL for client-side access
             size: file.size,
             dateAdded: new Date().toISOString(),
@@ -70,7 +70,6 @@ export async function uploadSchedule(formData: FormData): Promise<{ success: boo
         });
 
         revalidatePath('/schedule');
-        revalidatePath('/api/schedules');
         return { success: true, message: 'Plan erfolgreich hochgeladen.' };
 
     } catch (error: any) {
@@ -106,11 +105,42 @@ export async function deleteSchedule(scheduleId: string): Promise<{ success: boo
         await scheduleDocRef.delete();
         
         revalidatePath('/schedule');
-        revalidatePath('/api/schedules');
         return { success: true, message: 'Plan erfolgreich gelöscht.' };
 
     } catch (error: any) {
         console.error("Delete error:", error);
         return { success: false, message: error.message || 'Ein Fehler ist aufgetreten.' };
     }
+}
+
+// Action to get schedule download receipts with user information
+export async function getScheduleDownloadReceipts(): Promise<ScheduleDownloadReceiptWithUser[]> {
+    const receiptsSnapshot = await adminDb.collection('scheduleDownloads').orderBy('downloadedAt', 'desc').get();
+    
+    const receiptsData = receiptsSnapshot.docs.map(doc => doc.data() as ScheduleDownloadReceiptWithUser);
+    
+    const userIds = [...new Set(receiptsData.map(r => r.userId))];
+    
+    if (userIds.length === 0) {
+        return [];
+    }
+
+    const userRecords = await adminAuth.getUsers(userIds.map(uid => ({ uid })));
+    
+    const userMap = new Map(userRecords.users.map(u => {
+        const simpleUser: SimpleUser = {
+            uid: u.uid,
+            email: u.email,
+            displayName: u.displayName,
+            photoURL: u.photoURL,
+        };
+        return [u.uid, simpleUser];
+    }));
+
+    const receiptsWithUsers: ScheduleDownloadReceiptWithUser[] = receiptsData.map(receipt => ({
+        ...receipt,
+        user: userMap.get(receipt.userId),
+    }));
+
+    return receiptsWithUsers;
 }
