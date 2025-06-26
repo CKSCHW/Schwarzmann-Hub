@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -42,7 +41,7 @@ const surveySchema = z.object({
           path: [`questions`, index, 'options'],
         });
       }
-       if (q.options.some(opt => !opt.text)) {
+       if (q.options?.some(opt => !opt.text)) {
          ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: 'Alle Optionen müssen Text enthalten.',
@@ -119,7 +118,21 @@ const SurveyQuestionItem = ({ control, index, remove, fieldsLength, questionType
                 </div>
                 <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fieldsLength <= 1}><Trash2 className="h-4 w-4" /></Button>
             </div>
-            {questionType === 'multiple-choice' && <QuestionOptionsFieldArray control={control} questionIndex={index} />}
+            {questionType === 'multiple-choice' && (
+                 <FormField
+                    control={control}
+                    name={`questions.${index}.options`}
+                    render={() => (
+                        <FormItem>
+                            <FormLabel>Antwort-Optionen</FormLabel>
+                            <FormControl>
+                                <QuestionOptionsFieldArray control={control} questionIndex={index} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                 />
+            )}
         </div>
     );
 };
@@ -177,7 +190,6 @@ export default function SurveyForm({ mode, initialData, allUsers, currentUser }:
       router.refresh();
     } catch (error: any) {
       toast({ title: 'Fehler', description: error.message, variant: 'destructive' });
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -222,11 +234,14 @@ export default function SurveyForm({ mode, initialData, allUsers, currentUser }:
                       <FormItem>
                         <Dialog>
                             <DialogTrigger asChild>
-                                <Button variant="outline" className="w-full"><Users className="mr-2" />Benutzer zuweisen ({field.value?.length || 0})</Button>
+                                <Button type="button" variant="outline">
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Teilnehmer auswählen
+                                </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-md">
                                 <DialogHeader>
-                                    <DialogTitle>Benutzer zuweisen</DialogTitle>
+                                    <DialogTitle>Teilnehmer auswählen</DialogTitle>
                                     <DialogDescription>Wählen Sie die Benutzer aus, die an dieser Umfrage teilnehmen sollen.</DialogDescription>
                                 </DialogHeader>
                                 <ScrollArea className="h-72">
@@ -254,6 +269,9 @@ export default function SurveyForm({ mode, initialData, allUsers, currentUser }:
                                 </ScrollArea>
                             </DialogContent>
                         </Dialog>
+                        <div className="pt-2 text-sm text-muted-foreground">
+                          {field.value?.length || 0} Teilnehmer ausgewählt.
+                        </div>
                         <FormMessage/>
                       </FormItem>
                     )} />
