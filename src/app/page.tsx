@@ -1,10 +1,10 @@
-
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { ArrowRight, Newspaper, CalendarCheck2 } from "lucide-react";
+import { ArrowRight, Newspaper, CalendarCheck2, Download, FileText } from "lucide-react";
 import { getAppointmentsForUser } from "@/actions/dashboardActions";
 import { getArticles } from "@/actions/newsActions";
+import { getSchedules } from "@/actions/scheduleActions";
 import type { NewsArticle } from "@/types";
 import NewsCard from "@/components/NewsCard";
 
@@ -29,23 +29,18 @@ const quickAccessItems = [
     href: "/news",
     cta: "Zu den News",
   },
-  {
-    title: "Wocheneinteilung",
-    description: "Greifen Sie auf die aktuellen Wocheneinteilungen zu.",
-    icon: CalendarCheck2,
-    href: "/schedule",
-    cta: "Pläne ansehen",
-  },
 ];
 
 export default async function DashboardPage() {
-  const [appointments, allArticlesFromDb] = await Promise.all([
+  const [appointments, allArticlesFromDb, schedules] = await Promise.all([
     getAppointmentsForUser(),
-    getArticles({ limit: 1 })
+    getArticles({ limit: 1 }),
+    getSchedules(),
   ]);
   
   const allArticles = deduplicateArticles(allArticlesFromDb);
   const latestArticle = allArticles[0];
+  const latestSchedule = schedules?.[0];
 
   return (
     <div className="space-y-8">
@@ -81,6 +76,45 @@ export default async function DashboardPage() {
              <h2 className="text-xl font-headline font-semibold mb-4">
                 Schnellzugriff
             </h2>
+
+            <Card className="flex flex-col transition-all hover:shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                    <CardTitle className="text-lg font-medium">Wocheneinteilung</CardTitle>
+                    <CalendarCheck2 className="h-6 w-6 text-muted-foreground" />
+                </CardHeader>
+                <CardContent className="flex-grow">
+                    {latestSchedule ? (
+                        <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-primary flex-shrink-0" />
+                            <p className="text-sm font-medium truncate" title={latestSchedule.name}>
+                                {latestSchedule.name}
+                            </p>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">
+                            Aktuell ist kein Plan verfügbar.
+                        </p>
+                    )}
+                </CardContent>
+                <CardFooter>
+                    {latestSchedule ? (
+                        <Button asChild className="w-full">
+                            <a href={latestSchedule.url} download target="_blank" rel="noopener noreferrer">
+                                <Download className="mr-2 h-4 w-4" />
+                                Herunterladen
+                            </a>
+                        </Button>
+                    ) : (
+                         <Button asChild className="w-full">
+                            <Link href="/schedule">
+                                Zur Plan-Übersicht
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                    )}
+                </CardFooter>
+            </Card>
+
              {quickAccessItems.map((item) => (
                 <Card key={item.title} className="flex flex-col transition-all hover:shadow-md">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
