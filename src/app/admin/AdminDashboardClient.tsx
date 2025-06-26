@@ -12,9 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
-import { Eye, Loader2, Newspaper, UploadCloud, Globe, BellRing } from 'lucide-react';
-import { createArticle, importWordPressArticles } from '@/actions/adminActions';
+import { Eye, Loader2, Newspaper, UploadCloud, Globe, BellRing, Trash2 } from 'lucide-react';
+import { createArticle, importWordPressArticles, deleteArticle } from '@/actions/adminActions';
 import { sendTestNotification } from '@/actions/notificationActions';
 import type { NewsArticle, ReadReceiptWithUser } from '@/types';
 
@@ -44,6 +45,7 @@ export default function AdminDashboardClient({
   const [isCreating, setIsCreating] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<ArticleFormValues>({
@@ -133,6 +135,26 @@ export default function AdminDashboardClient({
       });
     } finally {
       setIsSendingTest(false);
+    }
+  };
+
+  const handleDeleteArticle = async (articleId: string) => {
+    setIsDeleting(articleId);
+    try {
+      await deleteArticle(articleId);
+      setArticles(prev => prev.filter(a => a.id !== articleId));
+      toast({
+        title: 'Artikel gelöscht',
+        description: 'Der interne Artikel wurde erfolgreich entfernt.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Fehler beim Löschen',
+        description: error.message || 'Der Artikel konnte nicht gelöscht werden.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -289,7 +311,7 @@ export default function AdminDashboardClient({
             Lesestatistiken
           </CardTitle>
           <CardDescription>
-            Hier sehen Sie, wer welche Artikel gelesen hat.
+            Hier sehen Sie, wer welche Artikel gelesen hat. Interne Artikel können hier gelöscht werden.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -301,10 +323,44 @@ export default function AdminDashboardClient({
                   <AccordionTrigger>
                     <div className="flex justify-between items-center w-full pr-4">
                       <span className="text-left font-medium truncate">{article.title}</span>
-                      <span className="flex items-center gap-2 text-sm font-normal text-muted-foreground">
-                        {articleReceipts.length}
-                        <Eye className="h-4 w-4" />
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {article.source === 'internal' && (
+                          <AlertDialog onOpenChange={(open) => !open && setIsDeleting(null)}>
+                            <AlertDialogTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive" 
+                                onClick={(e) => e.stopPropagation()} 
+                                disabled={isDeleting === article.id}
+                              >
+                                {isDeleting === article.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Sind Sie sicher?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Diese Aktion kann nicht rückgängig gemacht werden. Der Artikel und alle zugehörigen Lesestatistiken werden dauerhaft gelöscht.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleDeleteArticle(article.id)}
+                                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                                >
+                                  Löschen
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
+                        <span className="flex items-center gap-2 text-sm font-normal text-muted-foreground">
+                          {articleReceipts.length}
+                          <Eye className="h-4 w-4" />
+                        </span>
+                      </div>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>

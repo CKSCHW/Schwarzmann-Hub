@@ -16,6 +16,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarTrigger,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Home, CalendarDays, LogOut, ShieldCheck, Newspaper, BellOff, BellRing, User } from "lucide-react";
@@ -40,6 +41,45 @@ const navItems: NavItem[] = [
   { href: "/schedule", label: "Wocheneinteilung", icon: CalendarDays },
   { href: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
 ];
+
+const AppNav = () => {
+  const pathname = usePathname();
+  const { isAdmin } = useAuth();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  return (
+    <SidebarMenu>
+      {navItems.map((item) => {
+        if (item.adminOnly && !isAdmin) {
+          return null;
+        }
+        const isActive = item.match ? item.match(pathname) : pathname.startsWith(item.href);
+        return (
+          <SidebarMenuItem key={item.href}>
+            <SidebarMenuButton
+              asChild
+              isActive={isActive}
+              tooltip={{ children: item.label, side: "right", align: "center" }}
+              className="justify-start"
+              onClick={handleLinkClick}
+            >
+              <Link href={item.href}>
+                <item.icon className="h-5 w-5" />
+                <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        );
+      })}
+    </SidebarMenu>
+  );
+};
 
 const AppHeader = () => {
   return (
@@ -228,29 +268,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </Link>
           </SidebarHeader>
           <SidebarContent>
-            <SidebarMenu>
-              {navItems.map((item) => {
-                if (item.adminOnly && !isAdmin) {
-                  return null;
-                }
-                const isActive = item.match ? item.match(pathname) : pathname.startsWith(item.href);
-                return (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={{ children: item.label, side: "right", align: "center" }}
-                      className="justify-start"
-                    >
-                      <Link href={item.href}>
-                        <item.icon className="h-5 w-5" />
-                        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
+            <AppNav />
           </SidebarContent>
           <SidebarFooter className="p-4 border-t border-sidebar-border group-data-[collapsible=icon]:hidden">
             <p className="text-xs text-sidebar-foreground/70">

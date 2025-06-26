@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { adminDb, adminAuth } from '@/lib/firebase-admin';
+import { adminDb, adminAuth, getCurrentUser } from '@/lib/firebase-admin';
 import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser, UserGroup } from '@/types';
 import https from 'https';
 import axios from 'axios';
@@ -199,8 +199,18 @@ export async function importWordPressArticles() {
   return { newCount: totalNewArticles, updatedCount: totalUpdatedArticles };
 }
 
+
+// Helper to verify admin privileges
+async function verifyAdmin() {
+    const user = await getCurrentUser();
+    if (!user || user.isAdmin !== true) {
+        throw new Error('Unauthorized');
+    }
+}
+
 // Action to create a new article
 export async function createArticle(articleData: Omit<NewsArticle, 'id' | 'date'>): Promise<NewsArticle> {
+  await verifyAdmin();
   const articlesCollection = adminDb.collection('articles');
   
   const newArticleData = {
@@ -221,9 +231,42 @@ export async function createArticle(articleData: Omit<NewsArticle, 'id' | 'date'
 
   revalidatePath('/');
   revalidatePath('/admin');
+  revalidatePath('/news'); // Ensure the news list page is updated
   
   return newArticle;
 }
+
+// Action to delete a self-created article
+export async function deleteArticle(articleId: string) {
+    await verifyAdmin();
+
+    const articleRef = adminDb.collection('articles').doc(articleId);
+    const readReceiptsCollection = adminDb.collection('readReceipts');
+    
+    const articleDoc = await articleRef.get();
+    if (!articleDoc.exists || articleDoc.data()?.source !== 'internal') {
+        throw new Error('This article cannot be deleted.');
+    }
+
+    const batch = adminDb.batch();
+    
+    // 1. Delete the article itself
+    batch.delete(articleRef);
+
+    // 2. Find and delete all associated read receipts
+    const receiptsQuery = readReceiptsCollection.where('articleId', '==', articleId);
+    const receiptsSnapshot = await receiptsQuery.get();
+    receiptsSnapshot.docs.forEach(doc => {
+        batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+
+    revalidatePath('/');
+    revalidatePath('/admin');
+    revalidatePath('/news');
+}
+
 
 // Action to get articles with their read counts for the admin dashboard
 export async function getNewsArticlesWithReadCounts() {
