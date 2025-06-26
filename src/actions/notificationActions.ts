@@ -42,8 +42,62 @@ export async function deleteSubscription(endpoint: string) {
     }
 }
 
+// Sends a transient push notification to a specific list of users without saving it to the database history.
+// Ideal for user-specific alerts like survey invitations.
+export async function sendPushNotificationToUsers(
+    userIds: string[],
+    payload: Omit<PushNotificationPayload, 'notificationId'>
+) {
+    if (!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
+        console.log('Push notifications are not configured on the server. Skipping send.');
+        return;
+    }
+    if (!userIds || userIds.length === 0) {
+        return;
+    }
 
-// Central function to create a notification and send push messages
+    webpush.setVapidDetails(
+        'mailto:info@elektro-schwarzmann.at',
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY
+    );
+
+    const notificationString = JSON.stringify(payload);
+    const promises: Promise<any>[] = [];
+
+    // Firestore 'in' query is limited to 30 values. Chunk the userIds.
+    const chunks: string[][] = [];
+    for (let i = 0; i < userIds.length; i += 30) {
+        chunks.push(userIds.slice(i, i + 30));
+    }
+
+    for (const chunk of chunks) {
+        const subscriptionsSnapshot = await adminDb.collection('subscriptions').where('userId', 'in', chunk).get();
+        if (subscriptionsSnapshot.empty) {
+            continue;
+        }
+
+        subscriptionsSnapshot.forEach(doc => {
+            const subscription = doc.data() as webpush.PushSubscription;
+            promises.push(
+                webpush.sendNotification(subscription, notificationString)
+                    .catch(error => {
+                        if (error.statusCode === 404 || error.statusCode === 410) {
+                            console.log('Subscription has expired or is no longer valid, deleting: ', error.endpoint);
+                            return doc.ref.delete();
+                        } else {
+                            console.error('Error sending push notification to endpoint:', error.endpoint, error.body);
+                        }
+                    })
+            );
+        });
+    }
+
+    await Promise.all(promises);
+}
+
+
+// Central function to create a notification and send push messages to ALL users.
 export async function sendAndSavePushNotification(payload: Omit<Notification, 'id' | 'createdAt'>) {
     // 1. Save notification to the database
     const notificationsCollection = adminDb.collection('notifications');

@@ -1,9 +1,11 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import { adminDb, adminAuth, getCurrentUser } from '@/lib/firebase-admin';
 import type { Survey, SurveyCompletion, SurveyResponse, SimpleUser, SurveyWithCompletion, SurveyResult } from '@/types';
 import { firestore } from 'firebase-admin';
+import { sendPushNotificationToUsers } from './notificationActions';
 
 async function verifySurveyManager() {
     const user = await getCurrentUser();
@@ -20,7 +22,7 @@ async function verifySurveyManager() {
 export async function createSurvey(surveyData: Omit<Survey, 'id' | 'createdAt' | 'createdBy' | 'creatorEmail' | 'completionCount'>): Promise<Survey> {
     const user = await verifySurveyManager();
 
-    const newSurvey: Omit<Survey, 'id'> = {
+    const newSurveyData: Omit<Survey, 'id'> = {
         ...surveyData,
         createdBy: user.uid,
         creatorEmail: user.email || 'Unbekannt',
@@ -28,9 +30,23 @@ export async function createSurvey(surveyData: Omit<Survey, 'id' | 'createdAt' |
         completionCount: 0,
     };
 
-    const docRef = await adminDb.collection('surveys').add(newSurvey);
+    const docRef = await adminDb.collection('surveys').add(newSurveyData);
+    const newSurvey = { ...newSurveyData, id: docRef.id };
+
+    // Send push notification to assigned users
+    if (newSurvey.assignedUserIds && newSurvey.assignedUserIds.length > 0) {
+        await sendPushNotificationToUsers(
+            newSurvey.assignedUserIds,
+            {
+                title: 'Neue Umfrage für Sie',
+                body: `Sie wurden zur Umfrage "${newSurvey.title}" eingeladen.`,
+                url: `/surveys/${newSurvey.id}`,
+            }
+        );
+    }
+    
     revalidatePath('/admin');
-    return { ...newSurvey, id: docRef.id };
+    return newSurvey;
 }
 
 export async function deleteSurvey(surveyId: string): Promise<void> {
