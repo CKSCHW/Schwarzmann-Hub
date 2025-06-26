@@ -64,7 +64,7 @@ const AppHeader = () => {
 const UserMenu = () => {
   const { user, logout, isAdmin } = useAuth();
   const router = useRouter();
-  const { isSubscribed, subscribeToPush, unsubscribeFromPush, isSupported, permission, loading, isIos, isPwa } = usePushManager();
+  const { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, loading, isIos, isPwa } = usePushManager();
   const { toast } = useToast();
 
   const handleLogout = async () => {
@@ -114,22 +114,15 @@ const UserMenu = () => {
             </Link>
         </DropdownMenuItem>
         
-        {isSupported ? (
-          permission === 'denied' ? (
-            <DropdownMenuItem disabled>
-              <BellOff className="mr-2 h-4 w-4" />
-              <span>Benachrichtigungen blockiert</span>
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem onClick={handleToggleSubscription} disabled={loading}>
-              {isSubscribed ? <BellOff className="mr-2 h-4 w-4" /> : <BellRing className="mr-2 h-4 w-4" />}
-              <span>{isSubscribed ? 'Benachrichtigungen deaktivieren' : 'Benachrichtigungen aktivieren'}</span>
-            </DropdownMenuItem>
-          )
-        ) : (
+        {permission === 'denied' ? (
           <DropdownMenuItem disabled>
             <BellOff className="mr-2 h-4 w-4" />
-            <span>Benachrichtigungen (HTTPS nötig)</span>
+            <span>Benachrichtigungen blockiert</span>
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem onClick={handleToggleSubscription} disabled={loading}>
+            {isSubscribed ? <BellOff className="mr-2 h-4 w-4" /> : <BellRing className="mr-2 h-4 w-4" />}
+            <span>{isSubscribed ? 'Benachrichtigungen deaktivieren' : 'Benachrichtigungen aktivieren'}</span>
           </DropdownMenuItem>
         )}
 

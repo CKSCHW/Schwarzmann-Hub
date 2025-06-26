@@ -42,14 +42,12 @@ export function usePushManager() {
 
       if ('serviceWorker' in navigator && 'PushManager' in window) {
         setIsSupported(true);
-        // Use Permissions API for reactive updates if available
         if ('permissions' in navigator) {
           navigator.permissions.query({ name: 'notifications' }).then((status) => {
             setPermission(status.state);
             status.onchange = onPermissionChange;
           });
         } else {
-          // Fallback for older browsers
           setPermission(Notification.permission);
         }
       } else {
@@ -59,7 +57,6 @@ export function usePushManager() {
       setIsIos(/iPad|iPhone|iPod/.test(navigator.userAgent));
       setIsPwa(window.matchMedia('(display-mode: standalone)').matches);
       
-      // Cleanup
       return () => {
         if ('permissions' in navigator) {
             navigator.permissions.query({name: 'notifications'}).then(status => {
@@ -78,22 +75,39 @@ export function usePushManager() {
 
     const getSubscription = async () => {
       setLoading(true);
-      try {
-        const registration = await navigator.serviceWorker.ready;
-        const sub = await registration.pushManager.getSubscription();
-        setSubscription(sub);
-        setIsSubscribed(!!sub);
-      } catch (error) {
-        console.error('Error getting push subscription:', error);
-      } finally {
-        setLoading(false);
+      if (window.isSecureContext) {
+        try {
+          const registration = await navigator.serviceWorker.ready;
+          const sub = await registration.pushManager.getSubscription();
+          setSubscription(sub);
+          setIsSubscribed(!!sub);
+        } catch (error) {
+          console.error('Error getting push subscription:', error);
+        }
       }
+      setLoading(false);
     };
     getSubscription();
   }, [isSupported, user]);
 
   const subscribeToPush = useCallback(async () => {
-    if (!isSupported || !user || !VAPID_PUBLIC_KEY) {
+    if (!isSupported) {
+        toast({ title: 'Nicht unterstützt', description: 'Ihr Browser unterstützt keine Push-Benachrichtigungen.', variant: 'destructive'});
+        return;
+    }
+
+    // Demo mode for non-secure contexts (like local network without SSL)
+    if (!window.isSecureContext) {
+        toast({
+            title: 'Demo-Modus Aktiviert',
+            description: 'Benachrichtigungen sind für die Präsentation simuliert. Im echten Betrieb ist HTTPS nötig.',
+        });
+        setIsSubscribed(true); // Simulate successful subscription for UI
+        setPermission('granted');
+        return;
+    }
+
+    if (!user || !VAPID_PUBLIC_KEY) {
       console.error('Push not supported, user not logged in, or VAPID key missing.');
       if (!VAPID_PUBLIC_KEY) {
         toast({ title: 'Fehler', description: 'Push-Benachrichtigungen sind serverseitig nicht konfiguriert.', variant: 'destructive'});
@@ -144,6 +158,17 @@ export function usePushManager() {
   }, [isSupported, user, toast]);
 
   const unsubscribeFromPush = useCallback(async () => {
+    // Handle demo mode
+    if (!window.isSecureContext && isSubscribed) {
+        toast({
+            title: 'Demo-Modus Deaktiviert',
+            description: 'Simulation der Benachrichtigungs-Deaktivierung.',
+        });
+        setIsSubscribed(false);
+        setPermission('default');
+        return;
+    }
+    
     if (!subscription || !user) return;
     
     setLoading(true);
@@ -160,7 +185,7 @@ export function usePushManager() {
     } finally {
         setLoading(false);
     }
-  }, [subscription, user, toast]);
+  }, [subscription, user, toast, isSubscribed]);
 
   return { isSubscribed, subscribeToPush, unsubscribeFromPush, permission, isSupported, loading, isIos, isPwa };
 }
