@@ -1,6 +1,7 @@
 
-import { getArticle } from '@/actions/newsActions';
+import { getArticle, getComments } from '@/actions/newsActions';
 import MarkAsReadClientTrigger from './MarkAsRead';
+import NewsInteraction from './NewsInteraction';
 import { getCurrentUser } from '@/lib/firebase-admin';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -10,8 +11,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export const dynamic = 'force-dynamic';
 
 export default async function NewsDetailPage({ params }: { params: { id: string } }) {
-  const article = await getArticle(params.id);
   const user = await getCurrentUser();
+  const [article, comments] = await Promise.all([
+    getArticle(params.id),
+    getComments(params.id)
+  ]);
 
   if (!article) {
     notFound();
@@ -60,6 +64,15 @@ export default async function NewsDetailPage({ params }: { params: { id: string 
           {article.content && <div dangerouslySetInnerHTML={{ __html: article.content }} />}
         </div>
       </article>
+
+      {/* Interaction section below article */}
+      <div className="max-w-4xl mx-auto mt-8">
+        <NewsInteraction 
+          article={article}
+          user={user}
+          initialComments={comments}
+        />
+      </div>
     </>
   );
 }

@@ -13,9 +13,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { Eye, Loader2, Newspaper, UploadCloud, Globe, BellRing, Trash2 } from 'lucide-react';
-import { createArticle, importWordPressArticles, deleteArticle } from '@/actions/adminActions';
+import { createArticle, importWordPressArticles, deleteArticle, updateArticleSettings } from '@/actions/adminActions';
 import { sendTestNotification } from '@/actions/notificationActions';
 import type { NewsArticle, ReadReceiptWithUser } from '@/types';
 
@@ -94,14 +96,15 @@ export default function AdminDashboardClient({
   const onSubmit: SubmitHandler<ArticleFormValues> = async (data) => {
     setIsCreating(true);
     try {
-      const newArticleData: Omit<NewsArticle, 'id' | 'date'> = {
+      // Dummy values for fields that will be populated by the action
+      const newArticleData: Omit<NewsArticle, 'id' | 'date' | 'likes' | 'commentsEnabled' | 'commentCount'> = {
         ...data,
         imageUrl: data.imageUrl || `https://placehold.co/1200x600.png`,
         author: data.author || 'Geschäftsführung',
         category: 'Unternehmen',
         source: 'internal', // Explicitly set source for internal articles
       };
-      const newArticle = await createArticle(newArticleData);
+      const newArticle = await createArticle(newArticleData as any);
       setArticles([newArticle, ...articles]);
       form.reset();
       toast({
@@ -116,6 +119,23 @@ export default function AdminDashboardClient({
       });
     } finally {
       setIsCreating(false);
+    }
+  };
+  
+  const handleToggleComments = async (articleId: string, enabled: boolean) => {
+    try {
+        await updateArticleSettings(articleId, { commentsEnabled: enabled });
+        setArticles(prev => prev.map(a => a.id === articleId ? { ...a, commentsEnabled: enabled } : a));
+        toast({
+            title: 'Einstellung gespeichert',
+            description: `Kommentare sind nun ${enabled ? 'aktiviert' : 'deaktiviert'}.`,
+        });
+    } catch (error) {
+        toast({
+            title: 'Fehler',
+            description: 'Einstellung konnte nicht gespeichert werden.',
+            variant: 'destructive',
+        });
     }
   };
 
@@ -385,6 +405,21 @@ export default function AdminDashboardClient({
                       <p className="text-muted-foreground text-center py-4">
                         Dieser Artikel wurde noch von niemandem gelesen.
                       </p>
+                    )}
+                    {article.source === 'internal' && (
+                        <div className="border-t mt-4 pt-4">
+                            <h4 className="font-semibold text-sm mb-2">Einstellungen</h4>
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor={`comments-${article.id}`} className="text-sm font-normal">
+                                    Kommentare aktivieren
+                                </Label>
+                                <Switch
+                                    id={`comments-${article.id}`}
+                                    checked={article.commentsEnabled}
+                                    onCheckedChange={(checked) => handleToggleComments(article.id, checked)}
+                                />
+                            </div>
+                        </div>
                     )}
                   </AccordionContent>
                 </AccordionItem>

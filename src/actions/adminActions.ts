@@ -162,12 +162,25 @@ export async function importWordPressArticles() {
               category: 'Unternehmens-News',
               source: source.name,
               sourceId: sourceId,
+              link: article.link,
+              likes: [],
+              commentsEnabled: false,
+              commentCount: 0,
           };
           
           const existingDocId = existingArticlesMap.get(sourceId);
           if (existingDocId) {
+              // Preserve existing likes, comments settings, etc. when updating
+              const existingDoc = await articlesCollection.doc(existingDocId).get();
+              const existingData = existingDoc.data();
+              const preservedPayload = {
+                  ...articlePayload,
+                  likes: existingData?.likes || [],
+                  commentsEnabled: existingData?.commentsEnabled || false,
+                  commentCount: existingData?.commentCount || 0,
+              };
               const docRef = articlesCollection.doc(existingDocId);
-              batch.update(docRef, articlePayload);
+              batch.update(docRef, preservedPayload);
               totalUpdatedArticles++;
           } else {
               const docRef = articlesCollection.doc();
@@ -217,6 +230,9 @@ export async function createArticle(articleData: Omit<NewsArticle, 'id' | 'date'
       ...articleData,
       date: new Date().toISOString(),
       source: 'internal', // Explicitly set source for internal articles
+      likes: [],
+      commentsEnabled: false,
+      commentCount: 0,
   };
 
   const docRef = await articlesCollection.add(newArticleData);
@@ -303,6 +319,16 @@ export async function getNewsArticlesWithReadCounts() {
 
     return { articles, receipts: receiptsWithUsers };
 }
+
+// Action to update article settings (e.g., enable/disable comments)
+export async function updateArticleSettings(articleId: string, settings: { commentsEnabled: boolean }) {
+  await verifyAdmin();
+  const articleRef = adminDb.collection('articles').doc(articleId);
+  await articleRef.update(settings);
+  revalidatePath('/admin');
+  revalidatePath(`/news/${articleId}`);
+}
+
 
 // APPOINTMENT ACTIONS
 
