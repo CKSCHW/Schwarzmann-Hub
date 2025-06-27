@@ -113,7 +113,7 @@ export async function addComment(articleId: string, text: string, user: SimpleUs
     userId: user.uid,
     user: {
       displayName: user.displayName || user.email!,
-      photoURL: user.photoURL,
+      photoURL: user.photoURL || null,
     },
     text: text.trim(),
     createdAt: new Date().toISOString(),

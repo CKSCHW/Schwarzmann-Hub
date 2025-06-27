@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
+import { buttonVariants } from '@/components/ui/button';
 
 interface NewsInteractionProps {
   article: NewsArticle;
@@ -94,7 +95,7 @@ export default function NewsInteraction({ article, user, initialComments }: News
       userId: user.uid,
       user: {
         displayName: user.displayName || user.email!,
-        photoURL: user.photoURL,
+        photoURL: user.photoURL || null,
       },
       text: commentText.trim(),
       createdAt: new Date().toISOString(),
