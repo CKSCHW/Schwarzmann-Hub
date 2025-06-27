@@ -34,21 +34,12 @@ type NavItem = {
   label: string;
   icon: React.ElementType;
   match?: (pathname: string) => boolean;
-  adminOnly?: boolean;
-  requiresAuth?: boolean;
+  role?: 'surveyManager';
 };
-
-const navItems: NavItem[] = [
-  { href: "/", label: "Startseite", icon: Home, match: (pathname) => pathname === "/" },
-  { href: "/news", label: "News", icon: Newspaper, match: (pathname) => pathname.startsWith("/news") },
-  { href: "/schedule", label: "Wocheneinteilung", icon: CalendarDays },
-  { href: "/surveys", label: "Umfragen", icon: ClipboardList, match: (pathname) => pathname.startsWith("/surveys")},
-  { href: "/admin", label: "Admin", icon: ShieldCheck, adminOnly: true },
-];
 
 const AppNav = () => {
   const pathname = usePathname();
-  const { isAdmin } = useAuth();
+  const { isAdmin, isSurveyManager } = useAuth();
   const { isMobile, setOpenMobile } = useSidebar();
 
   const handleLinkClick = () => {
@@ -57,12 +48,24 @@ const AppNav = () => {
     }
   };
 
+  const navItems: NavItem[] = [
+    { href: "/", label: "Startseite", icon: Home, match: (pathname) => pathname === "/" },
+    { href: "/news", label: "News", icon: Newspaper, match: (pathname) => pathname.startsWith("/news") },
+    { href: "/schedule", label: "Wocheneinteilung", icon: CalendarDays },
+    { href: "/surveys", label: "Umfragen", icon: ClipboardList, match: (pathname) => pathname.startsWith("/surveys")},
+    { href: "/admin", label: isAdmin ? "Admin" : "Verwaltung", icon: ShieldCheck, role: 'surveyManager' },
+  ];
+
+  const filteredNavItems = navItems.filter(item => {
+    if (item.role === 'surveyManager') {
+      return isSurveyManager;
+    }
+    return true;
+  });
+
   return (
     <SidebarMenu>
-      {navItems.map((item) => {
-        if (item.adminOnly && !isAdmin) {
-          return null;
-        }
+      {filteredNavItems.map((item) => {
         const isActive = item.match ? item.match(pathname) : pathname.startsWith(item.href);
         return (
           <SidebarMenuItem key={item.href}>
