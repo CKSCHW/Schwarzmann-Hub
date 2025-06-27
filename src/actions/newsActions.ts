@@ -88,10 +88,14 @@ export async function toggleLikeArticle(articleId: string, userId: string): Prom
 export async function getComments(articleId: string): Promise<Comment[]> {
   const commentsSnapshot = await adminDb.collection('comments')
     .where('articleId', '==', articleId)
-    .orderBy('createdAt', 'asc')
     .get();
   
-  return commentsSnapshot.docs.map(doc => doc.data() as Comment);
+  const comments = commentsSnapshot.docs.map(doc => doc.data() as Comment);
+  
+  // Sort in-memory to avoid needing a composite index in Firestore.
+  comments.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  return comments;
 }
 
 // Action to add a new comment to an article
