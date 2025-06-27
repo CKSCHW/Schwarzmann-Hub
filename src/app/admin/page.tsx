@@ -8,6 +8,7 @@ import UserGroupManager from './UserGroupManager';
 import SurveyManager from './SurveyManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSurveysCreatedBy } from '@/actions/surveyActions';
+import CustomNotifier from './CustomNotifier';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export default async function AdminPage() {
   ] = await Promise.all([
     user.isAdmin ? adminActions.getNewsArticlesWithReadCounts() : Promise.resolve({ articles: [], receipts: [] }),
     user.isAdmin ? adminActions.getAppointments() : Promise.resolve([]),
-    // Users are needed for surveys, so fetch if admin or survey manager
+    // Users are needed for surveys and custom notifications, so fetch if admin or survey manager
     (user.isAdmin || isSurveyManager) ? adminActions.getUsersWithGroups() : Promise.resolve([]),
     isSurveyManager ? getSurveysCreatedBy(user.uid) : Promise.resolve([]),
   ]);
@@ -45,6 +46,7 @@ export default async function AdminPage() {
     { value: "news", label: "News & Statistiken", condition: user.isAdmin },
     { value: "appointments", label: "Termine", condition: user.isAdmin },
     { value: "users", label: "Benutzergruppen", condition: user.isAdmin },
+    { value: "notifications", label: "Benachrichtigungen", condition: user.isAdmin },
     { value: "surveys", label: "Umfragen", condition: isSurveyManager },
   ];
 
@@ -60,6 +62,7 @@ export default async function AdminPage() {
       2: 'grid-cols-2',
       3: 'grid-cols-3',
       4: 'grid-cols-4',
+      5: 'grid-cols-5',
   };
   const gridColsClass = gridColsClassMap[availableTabs.length] || 'grid-cols-1';
 
@@ -98,6 +101,12 @@ export default async function AdminPage() {
         {user.isAdmin && (
           <TabsContent value="users" className="mt-6">
             <UserGroupManager initialUsers={usersWithGroups} />
+          </TabsContent>
+        )}
+
+        {user.isAdmin && (
+          <TabsContent value="notifications" className="mt-6">
+            <CustomNotifier allUsers={usersWithGroups} />
           </TabsContent>
         )}
 
