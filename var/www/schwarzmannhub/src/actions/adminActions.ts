@@ -6,7 +6,7 @@ import { adminDb, adminAuth, getCurrentUser } from '@/lib/firebase-admin';
 import type { NewsArticle, ReadReceipt, ReadReceiptWithUser, Appointment, SimpleUser, UserGroup } from '@/types';
 import https from 'https';
 import axios from 'axios';
-import { sendAndSavePushNotification } from './notificationActions';
+import { sendAndSavePushNotification, sendPushNotificationToUsers } from './notificationActions';
 
 // WARNING: This is a workaround for local development environments with SSL certificate issues.
 // Do NOT use this in a production environment as it bypasses SSL certificate validation,
@@ -162,12 +162,25 @@ export async function importWordPressArticles() {
               category: 'Unternehmens-News',
               source: source.name,
               sourceId: sourceId,
+              link: article.link,
+              likes: [],
+              commentsEnabled: false,
+              commentCount: 0,
           };
           
           const existingDocId = existingArticlesMap.get(sourceId);
           if (existingDocId) {
+              // Preserve existing likes, comments settings, etc. when updating
+              const existingDoc = await articlesCollection.doc(existingDocId).get();
+              const existingData = existingDoc.data();
+              const preservedPayload = {
+                  ...articlePayload,
+                  likes: existingData?.likes || [],
+                  commentsEnabled: existingData?.commentsEnabled || false,
+                  commentCount: existingData?.commentCount || 0,
+              };
               const docRef = articlesCollection.doc(existingDocId);
-              batch.update(docRef, articlePayload);
+              batch.update(docRef, preservedPayload);
               totalUpdatedArticles++;
           } else {
               const docRef = articlesCollection.doc();
@@ -217,6 +230,9 @@ export async function createArticle(articleData: Omit<NewsArticle, 'id' | 'date'
       ...articleData,
       date: new Date().toISOString(),
       source: 'internal', // Explicitly set source for internal articles
+      likes: [],
+      commentsEnabled: false,
+      commentCount: 0,
   };
 
   const docRef = await articlesCollection.add(newArticleData);
@@ -304,10 +320,21 @@ export async function getNewsArticlesWithReadCounts() {
     return { articles, receipts: receiptsWithUsers };
 }
 
+// Action to update article settings (e.g., enable/disable comments)
+export async function updateArticleSettings(articleId: string, settings: { commentsEnabled: boolean }) {
+  await verifyAdmin();
+  const articleRef = adminDb.collection('articles').doc(articleId);
+  await articleRef.update(settings);
+  revalidatePath('/admin');
+  revalidatePath(`/news/${articleId}`);
+}
+
+
 // APPOINTMENT ACTIONS
 
 // Action to get all appointments for the admin dashboard
 export async function getAppointments(): Promise<Appointment[]> {
+    await verifyAdmin();
     const snapshot = await adminDb.collection('appointments').orderBy('date', 'desc').get();
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Appointment));
 }
@@ -381,4 +408,28 @@ export async function updateUserGroups(uid: string, groups: UserGroup[]): Promis
 
     await adminAuth.setCustomUserClaims(uid, newClaims);
     revalidatePath('/admin');
+}
+
+export async function sendCustomPushNotification(
+    userIds: string[],
+    payload: { title: string; body: string; url: string; }
+) {
+    await verifyAdmin();
+
+    if (!userIds || userIds.length === 0) {
+        throw new Error('Bitte wähle mindestens einen Empfänger aus.');
+    }
+    if (!payload.title || !payload.body) {
+        throw new Error('Titel und Nachricht sind erforderlich.');
+    }
+
+    // This is for transient notifications, so we don't save it.
+    await sendPushNotificationToUsers(userIds, {
+        title: payload.title,
+        body: payload.body,
+        url: payload.url || '/',
+        icon: "https://www.elektro-schwarzmann.at/wp-content/uploads/2022/06/cropped-Favicon_Elektro_Schwarzmann-Wiener-Neustadt-180x180.png"
+    });
+
+    return { success: true, message: `Benachrichtigung an ${userIds.length} Benutzer gesendet.` };
 }

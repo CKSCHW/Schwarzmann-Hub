@@ -10,6 +10,10 @@ export interface NewsArticle {
   category?: string;
   source?: string; // e.g., 'wordpress' or 'internal'
   sourceId?: string; // original post ID from source
+  link?: string; // The original URL of the article from the source
+  likes: string[]; // Array of user UIDs who liked the article
+  commentsEnabled: boolean; // Is the comment section active
+  commentCount: number; // To avoid fetching all comments just for a count
 }
 
 export const userGroups = [
@@ -172,4 +176,17 @@ export interface SurveyResult {
 
 export interface SurveyWithCompletion extends Survey {
     completed: boolean;
+}
+
+// --- Article Interaction Types ---
+export interface Comment {
+  id: string;
+  articleId: string;
+  userId: string;
+  user: {
+    displayName: string;
+    photoURL?: string | null;
+  };
+  text: string;
+  createdAt: string; // Stored as ISO string
 }
